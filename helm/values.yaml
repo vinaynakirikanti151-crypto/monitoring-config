@@ -1,0 +1,24 @@
+grafana:
+  enabled: true
+  adminUser: admin
+  adminPassword: admin123
+
+prometheus:
+  enabled: true
+
+alertmanager:
+  enabled: true
+  config:
+    global:
+      smtp_smarthost: 'smtp.gmail.com:587'
+      smtp_from: 'your-email@gmail.com'
+      smtp_auth_username: 'your-email@gmail.com'
+      smtp_auth_password: 'YOUR_APP_PASSWORD'
+
+    route:
+      receiver: 'email-alert'
+
+    receivers:
+      - name: 'email-alert'
+        email_configs:
+          - to: 'your-email@gmail.com'
