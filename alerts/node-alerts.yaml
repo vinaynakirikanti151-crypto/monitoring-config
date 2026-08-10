@@ -1,0 +1,26 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+
+metadata:
+  name: kubernetes-node-alerts
+  namespace: monitoring
+  labels:
+    release: monitoring
+
+spec:
+  groups:
+    - name: kubernetes-node-alerts
+      rules:
+
+        - alert: KubernetesNodeNotReady
+
+          expr: kube_node_status_condition{condition="Ready",status="true"} == 0
+
+          for: 5m
+
+          labels:
+            severity: critical
+
+          annotations:
+            summary: "Kubernetes node is NotReady"
+            description: "Node {{ $labels.node }} has been NotReady for more than 5 minutes."
