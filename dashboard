@@ -1,0 +1,618 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,vhgghf
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "refresh": "1m",
+  "schemaVersion": 39,
+  "tags": [
+    "gke",
+    "jupyterhub",
+    "user-session",
+    "elasticsearch"
+  ],
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "JupyterHub User Session Dashboard - ELK",
+  "uid": null,
+  "version": 1,
+  "weekStart": "",
+  "templating": {
+    "list": [
+      {
+        "name": "cluster",
+        "label": "Cluster",
+        "type": "query",
+        "datasource": {
+          "type": "elasticsearch",
+          "uid": "vinay"
+        },
+        "refresh": 1,
+        "sort": 1,
+        "multi": false,
+        "includeAll": false,
+        "query": "{\"find\":\"terms\",\"field\":\"labels.k8s_cluster_name\",\"size\":1000}",
+        "definition": "{\"find\":\"terms\",\"field\":\"labels.k8s_cluster_name\",\"size\":1000}",
+        "regex": "",
+        "current": {},
+        "options": [],
+        "skipUrlSync": false
+      },
+      {
+        "name": "namespace",
+        "label": "Namespace",
+        "type": "query",
+        "datasource": {
+          "type": "elasticsearch",
+          "uid": "vinay"
+        },
+        "refresh": 1,
+        "sort": 1,
+        "multi": false,
+        "includeAll": false,
+        "query": "{\"find\":\"terms\",\"field\":\"kubernetes.namespace\",\"query\":\"labels.k8s_cluster_name:\\\"$cluster\\\"\",\"size\":1000}",
+        "definition": "{\"find\":\"terms\",\"field\":\"kubernetes.namespace\",\"query\":\"labels.k8s_cluster_name:\\\"$cluster\\\"\",\"size\":1000}",
+        "regex": "",
+        "current": {},
+        "options": [],
+        "skipUrlSync": false
+      },
+      {
+        "name": "user",
+        "label": "User",
+        "type": "query",
+        "datasource": {
+          "type": "elasticsearch",
+          "uid": "vinay"
+        },
+        "refresh": 1,
+        "sort": 1,
+        "multi": false,
+        "includeAll": false,
+        "query": "{\"find\":\"terms\",\"field\":\"kubernetes.pod.name\",\"query\":\"labels.k8s_cluster_name:\\\"$cluster\\\" AND kubernetes.namespace:\\\"$namespace\\\" AND kubernetes.pod.name:jupyter-*\",\"size\":1000}",
+        "definition": "{\"find\":\"terms\",\"field\":\"kubernetes.pod.name\",\"query\":\"labels.k8s_cluster_name:\\\"$cluster\\\" AND kubernetes.namespace:\\\"$namespace\\\" AND kubernetes.pod.name:jupyter-*\",\"size\":1000}",
+        "regex": "/^jupyter-([^-]+).*/",
+        "current": {},
+        "options": [],
+        "skipUrlSync": false
+      },
+      {
+        "name": "user_session",
+        "label": "User Session",
+        "type": "query",
+        "datasource": {
+          "type": "elasticsearch",
+          "uid": "vinay"
+        },
+        "refresh": 1,
+        "sort": 1,
+        "multi": false,
+        "includeAll": false,
+        "query": "{\"find\":\"terms\",\"field\":\"kubernetes.pod.name\",\"query\":\"labels.k8s_cluster_name:\\\"$cluster\\\" AND kubernetes.namespace:\\\"$namespace\\\" AND (kubernetes.pod.name:jupyter-$user* OR kubernetes.pod.name:$user-exec*)\",\"size\":1000}",
+        "definition": "{\"find\":\"terms\",\"field\":\"kubernetes.pod.name\",\"query\":\"labels.k8s_cluster_name:\\\"$cluster\\\" AND kubernetes.namespace:\\\"$namespace\\\" AND (kubernetes.pod.name:jupyter-$user* OR kubernetes.pod.name:$user-exec*)\",\"size\":1000}",
+        "regex": "",
+        "current": {},
+        "options": [],
+        "skipUrlSync": false
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "table",
+      "title": "Namespaces in Selected Cluster",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "vinay"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 0,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "vinay"
+          },
+          "timeField": "@timestamp",
+          "query": "labels.k8s_cluster_name:\"$cluster\" AND kubernetes.namespace:* AND kubernetes.pod.name:*",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "cardinality",
+              "field": "kubernetes.pod.name"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "field": "kubernetes.namespace",
+              "id": "2",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "1000"
+              },
+              "type": "terms"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "table",
+      "title": "User Sessions for Selected User",
+      "description": "Lists all pods associated with the selected JupyterHub user.",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "vinay"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 16,
+        "x": 8,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "kubernetes.pod.name"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "User Session"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "k8s.pod.phase"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Status"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "kubernetes.node.name"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Node"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "vinay"
+          },
+          "timeField": "@timestamp",
+          "query": "labels.k8s_cluster_name:\"$cluster\" AND kubernetes.namespace:\"$namespace\" AND (kubernetes.pod.name:jupyter-$user* OR kubernetes.pod.name:$user-exec*)",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "count"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "field": "kubernetes.pod.name",
+              "id": "2",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "1000"
+              },
+              "type": "terms"
+            },
+            {
+              "field": "k8s.pod.phase",
+              "id": "3",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "20"
+              },
+              "type": "terms"
+            },
+            {
+              "field": "kubernetes.node.name",
+              "id": "4",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "1000"
+              },
+              "type": "terms"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "CPU Usage",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "vinay"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 3,
+          "unit": "none",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "vinay"
+          },
+          "timeField": "@timestamp",
+          "query": "labels.k8s_cluster_name:\"$cluster\" AND kubernetes.namespace:\"$namespace\" AND kubernetes.pod.name:\"$user_session\" AND k8s.pod.cpu.usage:*",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "avg",
+              "field": "k8s.pod.cpu.usage"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "field": "@timestamp",
+              "id": "2",
+              "settings": {
+                "interval": "auto",
+                "min_doc_count": "0",
+                "timeZone": "utc",
+                "trimEdges": "0"
+              },
+              "type": "date_histogram"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Memory Usage",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "vinay"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "vinay"
+          },
+          "timeField": "@timestamp",
+          "query": "labels.k8s_cluster_name:\"$cluster\" AND kubernetes.namespace:\"$namespace\" AND kubernetes.pod.name:\"$user_session\" AND k8s.pod.memory.working_set:*",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "avg",
+              "field": "k8s.pod.memory.working_set"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "field": "@timestamp",
+              "id": "2",
+              "settings": {
+                "interval": "auto",
+                "min_doc_count": "0",
+                "timeZone": "utc",
+                "trimEdges": "0"
+              },
+              "type": "date_histogram"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "table",
+      "title": "Selected User Session Details",
+      "description": "Operational details for the selected user session.",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "vinay"
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "kubernetes.pod.name"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "User Session"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "k8s.pod.phase"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Status"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "kubernetes.node.name"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Node"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "labels.k8s_container_name"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Container"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "vinay"
+          },
+          "timeField": "@timestamp",
+          "query": "labels.k8s_cluster_name:\"$cluster\" AND kubernetes.namespace:\"$namespace\" AND kubernetes.pod.name:\"$user_session\"",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "count"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "field": "kubernetes.pod.name",
+              "id": "2",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "100"
+              },
+              "type": "terms"
+            },
+            {
+              "field": "k8s.pod.phase",
+              "id": "3",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "20"
+              },
+              "type": "terms"
+            },
+            {
+              "field": "kubernetes.node.name",
+              "id": "4",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "100"
+              },
+              "type": "terms"
+            },
+            {
+              "field": "labels.k8s_container_name",
+              "id": "5",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "100"
+              },
+              "type": "terms"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
