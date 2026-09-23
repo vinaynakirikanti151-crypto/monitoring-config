@@ -103,14 +103,14 @@
     {
       "id": 1,
       "type": "table",
-      "title": "Jupyter Namespaces in Selected Cluster",
+      "title": "Jupyter Namespaces",
       "datasource": {
         "type": "elasticsearch",
         "uid": "vinay"
       },
       "gridPos": {
-        "h": 9,
-        "w": 8,
+        "h": 8,
+        "w": 6,
         "x": 0,
         "y": 0
       },
@@ -124,7 +124,32 @@
             "filterable": true
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "kubernetes.namespace"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Namespace"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Unique count"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Pods"
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "showHeader": true,
@@ -171,18 +196,222 @@
     },
     {
       "id": 2,
-      "type": "table",
-      "title": "All User Sessions",
-      "description": "Lists server pods, CronJob-triggered pods, and executor pods for the selected user.",
+      "type": "stat",
+      "title": "Server Pods",
       "datasource": {
         "type": "elasticsearch",
         "uid": "vinay"
       },
       "gridPos": {
-        "h": 9,
-        "w": 16,
-        "x": 8,
+        "h": 8,
+        "w": 6,
+        "x": 6,
         "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "unit": "none",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "vinay"
+          },
+          "timeField": "@timestamp",
+          "query": "labels.k8s_cluster_name:\"$cluster\" AND kubernetes.namespace:\"$namespace\" AND kubernetes.pod.name:jupyter-$user--*",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "cardinality",
+              "field": "kubernetes.pod.name"
+            }
+          ],
+          "bucketAggs": []
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "CronJob Triggered Pods",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "vinay"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "unit": "none",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "vinay"
+          },
+          "timeField": "@timestamp",
+          "query": "labels.k8s_cluster_name:\"$cluster\" AND kubernetes.namespace:\"$namespace\" AND kubernetes.pod.name:jupyter-$user-* AND NOT kubernetes.pod.name:jupyter-$user--*",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "cardinality",
+              "field": "kubernetes.pod.name"
+            }
+          ],
+          "bucketAggs": []
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Executors",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "vinay"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "unit": "none",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "vinay"
+          },
+          "timeField": "@timestamp",
+          "query": "labels.k8s_cluster_name:\"$cluster\" AND kubernetes.namespace:\"$namespace\" AND kubernetes.pod.name:$user-exec-*",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "cardinality",
+              "field": "kubernetes.pod.name"
+            }
+          ],
+          "bucketAggs": []
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "table",
+      "title": "All User Sessions",
+      "description": "Server pods, CronJob-triggered pods, and executor pods for the selected user.",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "vinay"
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 24,
+        "x": 0,
+        "y": 8
       },
       "fieldConfig": {
         "defaults": {
@@ -355,7 +584,7 @@
       ]
     },
     {
-      "id": 3,
+      "id": 6,
       "type": "stat",
       "title": "CPU Usage",
       "datasource": {
@@ -366,7 +595,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 9
+        "y": 19
       },
       "fieldConfig": {
         "defaults": {
@@ -435,7 +664,7 @@
       ]
     },
     {
-      "id": 4,
+      "id": 7,
       "type": "stat",
       "title": "Memory Usage",
       "datasource": {
@@ -446,7 +675,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 9
+        "y": 19
       },
       "fieldConfig": {
         "defaults": {
@@ -514,7 +743,7 @@
       ]
     },
     {
-      "id": 5,
+      "id": 8,
       "type": "table",
       "title": "Selected User Session Details",
       "description": "Pod and node details for the selected user session.",
@@ -523,10 +752,10 @@
         "uid": "vinay"
       },
       "gridPos": {
-        "h": 10,
+        "h": 9,
         "w": 24,
         "x": 0,
-        "y": 16
+        "y": 26
       },
       "fieldConfig": {
         "defaults": {
