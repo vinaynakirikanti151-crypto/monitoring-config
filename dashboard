@@ -3,7 +3,7 @@
     "list": []
   },
   "editable": true,
-  "fiscalYearStartMonth": 0,vhgghf
+  "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": null,
   "links": [],
@@ -17,7 +17,7 @@
     "elasticsearch"
   ],
   "time": {
-    "from": "now-30m",
+    "from": "now-24h",
     "to": "now"
   },
   "timepicker": {},
@@ -31,20 +31,13 @@
       {
         "name": "cluster",
         "label": "Cluster",
-        "type": "query",
-        "datasource": {
-          "type": "elasticsearch",
-          "uid": "vinay"
-        },
-        "refresh": 1,
-        "sort": 1,
-        "multi": false,
-        "includeAll": false,
-        "query": "{\"find\":\"terms\",\"field\":\"labels.k8s_cluster_name\",\"size\":1000}",
-        "definition": "{\"find\":\"terms\",\"field\":\"labels.k8s_cluster_name\",\"size\":1000}",
-        "regex": "",
+        "type": "custom",
+        "query": "cluster1,cluster2",
         "current": {},
         "options": [],
+        "includeAll": false,
+        "multi": false,
+        "hide": 0,
         "skipUrlSync": false
       },
       {
@@ -59,9 +52,9 @@
         "sort": 1,
         "multi": false,
         "includeAll": false,
-        "query": "{\"find\":\"terms\",\"field\":\"kubernetes.namespace\",\"query\":\"labels.k8s_cluster_name:\\\"$cluster\\\"\",\"size\":1000}",
-        "definition": "{\"find\":\"terms\",\"field\":\"kubernetes.namespace\",\"query\":\"labels.k8s_cluster_name:\\\"$cluster\\\"\",\"size\":1000}",
-        "regex": "",
+        "query": "{\"find\":\"terms\",\"field\":\"kubernetes.namespace\",\"query\":\"labels.k8s_cluster_name:\\\"$cluster\\\" AND kubernetes.namespace:adak-acsgjh*\",\"size\":1000}",
+        "definition": "{\"find\":\"terms\",\"field\":\"kubernetes.namespace\",\"query\":\"labels.k8s_cluster_name:\\\"$cluster\\\" AND kubernetes.namespace:adak-acsgjh*\",\"size\":1000}",
+        "regex": "/^adak-acsgjh.*/",
         "current": {},
         "options": [],
         "skipUrlSync": false
@@ -97,8 +90,8 @@
         "sort": 1,
         "multi": false,
         "includeAll": false,
-        "query": "{\"find\":\"terms\",\"field\":\"kubernetes.pod.name\",\"query\":\"labels.k8s_cluster_name:\\\"$cluster\\\" AND kubernetes.namespace:\\\"$namespace\\\" AND (kubernetes.pod.name:jupyter-$user* OR kubernetes.pod.name:$user-exec*)\",\"size\":1000}",
-        "definition": "{\"find\":\"terms\",\"field\":\"kubernetes.pod.name\",\"query\":\"labels.k8s_cluster_name:\\\"$cluster\\\" AND kubernetes.namespace:\\\"$namespace\\\" AND (kubernetes.pod.name:jupyter-$user* OR kubernetes.pod.name:$user-exec*)\",\"size\":1000}",
+        "query": "{\"find\":\"terms\",\"field\":\"kubernetes.pod.name\",\"query\":\"labels.k8s_cluster_name:\\\"$cluster\\\" AND kubernetes.namespace:\\\"$namespace\\\" AND (kubernetes.pod.name:jupyter-$user* OR kubernetes.pod.name:$user-exec-*)\",\"size\":1000}",
+        "definition": "{\"find\":\"terms\",\"field\":\"kubernetes.pod.name\",\"query\":\"labels.k8s_cluster_name:\\\"$cluster\\\" AND kubernetes.namespace:\\\"$namespace\\\" AND (kubernetes.pod.name:jupyter-$user* OR kubernetes.pod.name:$user-exec-*)\",\"size\":1000}",
         "regex": "",
         "current": {},
         "options": [],
@@ -110,7 +103,7 @@
     {
       "id": 1,
       "type": "table",
-      "title": "Namespaces in Selected Cluster",
+      "title": "Jupyter Namespaces in Selected Cluster",
       "datasource": {
         "type": "elasticsearch",
         "uid": "vinay"
@@ -152,7 +145,7 @@
             "uid": "vinay"
           },
           "timeField": "@timestamp",
-          "query": "labels.k8s_cluster_name:\"$cluster\" AND kubernetes.namespace:* AND kubernetes.pod.name:*",
+          "query": "labels.k8s_cluster_name:\"$cluster\" AND kubernetes.namespace:adak-acsgjh* AND kubernetes.pod.name:*",
           "metrics": [
             {
               "id": "1",
@@ -179,8 +172,8 @@
     {
       "id": 2,
       "type": "table",
-      "title": "User Sessions for Selected User",
-      "description": "Lists all pods associated with the selected JupyterHub user.",
+      "title": "All User Sessions",
+      "description": "Lists server pods, CronJob-triggered pods, and executor pods for the selected user.",
       "datasource": {
         "type": "elasticsearch",
         "uid": "vinay"
@@ -201,44 +194,7 @@
             "filterable": true
           }
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "kubernetes.pod.name"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "User Session"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "k8s.pod.phase"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "Status"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "kubernetes.node.name"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "Node"
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "options": {
         "showHeader": true,
@@ -259,7 +215,7 @@
             "uid": "vinay"
           },
           "timeField": "@timestamp",
-          "query": "labels.k8s_cluster_name:\"$cluster\" AND kubernetes.namespace:\"$namespace\" AND (kubernetes.pod.name:jupyter-$user* OR kubernetes.pod.name:$user-exec*)",
+          "query": "labels.k8s_cluster_name:\"$cluster\" AND kubernetes.namespace:\"$namespace\" AND kubernetes.pod.name:jupyter-$user--*",
           "metrics": [
             {
               "id": "1",
@@ -277,21 +233,27 @@
                 "size": "1000"
               },
               "type": "terms"
-            },
+            }
+          ]
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "vinay"
+          },
+          "timeField": "@timestamp",
+          "query": "labels.k8s_cluster_name:\"$cluster\" AND kubernetes.namespace:\"$namespace\" AND kubernetes.pod.name:jupyter-$user-* AND NOT kubernetes.pod.name:jupyter-$user--*",
+          "metrics": [
             {
-              "field": "k8s.pod.phase",
-              "id": "3",
-              "settings": {
-                "min_doc_count": "1",
-                "order": "asc",
-                "orderBy": "_term",
-                "size": "20"
-              },
-              "type": "terms"
-            },
+              "id": "1",
+              "type": "count"
+            }
+          ],
+          "bucketAggs": [
             {
-              "field": "kubernetes.node.name",
-              "id": "4",
+              "field": "kubernetes.pod.name",
+              "id": "2",
               "settings": {
                 "min_doc_count": "1",
                 "order": "asc",
@@ -301,6 +263,94 @@
               "type": "terms"
             }
           ]
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "vinay"
+          },
+          "timeField": "@timestamp",
+          "query": "labels.k8s_cluster_name:\"$cluster\" AND kubernetes.namespace:\"$namespace\" AND kubernetes.pod.name:$user-exec-*",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "count"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "field": "kubernetes.pod.name",
+              "id": "2",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "1000"
+              },
+              "type": "terms"
+            }
+          ]
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "filter": {
+            "id": "byRefId",
+            "options": "A"
+          },
+          "options": {
+            "excludeByName": {
+              "Count": true
+            },
+            "indexByName": {
+              "kubernetes.pod.name": 0
+            },
+            "renameByName": {
+              "kubernetes.pod.name": "Server Pods"
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "filter": {
+            "id": "byRefId",
+            "options": "B"
+          },
+          "options": {
+            "excludeByName": {
+              "Count": true
+            },
+            "indexByName": {
+              "kubernetes.pod.name": 0
+            },
+            "renameByName": {
+              "kubernetes.pod.name": "CronJob Triggered Pods"
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "filter": {
+            "id": "byRefId",
+            "options": "C"
+          },
+          "options": {
+            "excludeByName": {
+              "Count": true
+            },
+            "indexByName": {
+              "kubernetes.pod.name": 0
+            },
+            "renameByName": {
+              "kubernetes.pod.name": "Executors"
+            }
+          }
+        },
+        {
+          "id": "concatenate",
+          "options": {}
         }
       ]
     },
@@ -467,7 +517,7 @@
       "id": 5,
       "type": "table",
       "title": "Selected User Session Details",
-      "description": "Operational details for the selected user session.",
+      "description": "Pod and node details for the selected user session.",
       "datasource": {
         "type": "elasticsearch",
         "uid": "vinay"
@@ -504,36 +554,12 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "k8s.pod.phase"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "Status"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
               "options": "kubernetes.node.name"
             },
             "properties": [
               {
                 "id": "displayName",
                 "value": "Node"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "labels.k8s_container_name"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "Container"
               }
             ]
           }
@@ -578,30 +604,8 @@
               "type": "terms"
             },
             {
-              "field": "k8s.pod.phase",
-              "id": "3",
-              "settings": {
-                "min_doc_count": "1",
-                "order": "asc",
-                "orderBy": "_term",
-                "size": "20"
-              },
-              "type": "terms"
-            },
-            {
               "field": "kubernetes.node.name",
-              "id": "4",
-              "settings": {
-                "min_doc_count": "1",
-                "order": "asc",
-                "orderBy": "_term",
-                "size": "100"
-              },
-              "type": "terms"
-            },
-            {
-              "field": "labels.k8s_container_name",
-              "id": "5",
+              "id": "3",
               "settings": {
                 "min_doc_count": "1",
                 "order": "asc",
