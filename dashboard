@@ -2242,7 +2242,8 @@
         "textMode": "auto",
         "justifyMode": "center"
       },
-      "transformations": []
+      "transformations": [],
+      "timeFrom": "365d"
     },
     {
       "id": 19,
@@ -2818,7 +2819,8 @@
             ]
           }
         }
-      ]
+      ],
+      "timeFrom": "365d"
     },
     {
       "id": 23,
@@ -3003,8 +3005,8 @@
     {
       "id": 24,
       "type": "table",
-      "title": "Cronjobs by creation date: last scheduled and last success",
-      "description": "Every cronjob created in the last 90 days, newest first, with its creation date, last scheduled time and last successful run. Empty times show Never, so jobs that never ran are visible in the same list.",
+      "title": "Cronjobs never scheduled, oldest first",
+      "description": "Cronjobs that have no last-scheduled time, sorted by creation date with the oldest at the top. Covers the last year of ELK data.",
       "datasource": {
         "type": "elasticsearch",
         "uid": "${DS_APPLE}"
@@ -3016,31 +3018,25 @@
             "uid": "${DS_APPLE}"
           },
           "refId": "A",
-          "query": "labels.k8s_cluster_name:${cluster:lucene} AND labels.k8s_resource_name:\"cronjobs\" AND labels.creationTime:[now-90d TO now]",
+          "query": "labels.k8s_cluster_name:${cluster:lucene} AND labels.k8s_resource_name:\"cronjobs\" AND NOT labels.lastScheduleTime:*",
           "alias": "",
           "metrics": [
             {
               "id": "1",
-              "type": "max",
+              "type": "min",
               "settings": {},
-              "field": "labels.lastScheduleTime"
+              "field": "labels.creationTime"
             },
             {
               "id": "2",
               "type": "max",
               "settings": {},
               "field": "labels.lastSuccessfulTime"
-            },
-            {
-              "id": "3",
-              "type": "min",
-              "settings": {},
-              "field": "labels.creationTime"
             }
           ],
           "bucketAggs": [
             {
-              "id": "4",
+              "id": "3",
               "type": "terms",
               "field": "labels.cronjob_name",
               "settings": {
@@ -3051,7 +3047,7 @@
               }
             },
             {
-              "id": "5",
+              "id": "4",
               "type": "terms",
               "field": "labels.user",
               "settings": {
@@ -3062,20 +3058,9 @@
               }
             },
             {
-              "id": "6",
+              "id": "5",
               "type": "terms",
               "field": "labels.schedule",
-              "settings": {
-                "min_doc_count": "1",
-                "order": "asc",
-                "orderBy": "_term",
-                "size": "1"
-              }
-            },
-            {
-              "id": "7",
-              "type": "terms",
-              "field": "labels.input_filename",
               "settings": {
                 "min_doc_count": "1",
                 "order": "asc",
@@ -3088,7 +3073,7 @@
         }
       ],
       "gridPos": {
-        "h": 8,
+        "h": 9,
         "w": 24,
         "x": 0,
         "y": 91
@@ -3206,13 +3191,223 @@
             ]
           }
         }
-      ]
+      ],
+      "timeFrom": "365d"
     },
     {
       "id": 25,
       "type": "table",
+      "title": "Cronjobs by creation date: last scheduled and last success",
+      "description": "Every cronjob in the last year, newest first, with its creation date, last scheduled time and last successful run. Empty times show Never. Paused and deleted jobs appear if ELK still holds their events.",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_APPLE}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_APPLE}"
+          },
+          "refId": "A",
+          "query": "labels.k8s_cluster_name:${cluster:lucene} AND labels.k8s_resource_name:\"cronjobs\"",
+          "alias": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "max",
+              "settings": {},
+              "field": "labels.lastScheduleTime"
+            },
+            {
+              "id": "2",
+              "type": "max",
+              "settings": {},
+              "field": "labels.lastSuccessfulTime"
+            },
+            {
+              "id": "3",
+              "type": "min",
+              "settings": {},
+              "field": "labels.creationTime"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "4",
+              "type": "terms",
+              "field": "labels.cronjob_name",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "10000"
+              }
+            },
+            {
+              "id": "5",
+              "type": "terms",
+              "field": "labels.user",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "1"
+              }
+            },
+            {
+              "id": "6",
+              "type": "terms",
+              "field": "labels.schedule",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "1"
+              }
+            },
+            {
+              "id": "7",
+              "type": "terms",
+              "field": "labels.input_filename",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "1"
+              }
+            }
+          ],
+          "timeField": "@timestamp"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 100
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": true,
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*labels\\.last.*"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeFromNow"
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "special",
+                    "options": {
+                      "match": "null",
+                      "result": {
+                        "text": "Never",
+                        "color": "red",
+                        "index": 0
+                      }
+                    }
+                  },
+                  {
+                    "type": "range",
+                    "options": {
+                      "from": -1,
+                      "to": 1,
+                      "result": {
+                        "text": "Never",
+                        "color": "red",
+                        "index": 1
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^Min.*"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsLocal"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
+        }
+      },
+      "transformations": [
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "Min labels.creationTime",
+                "destinationType": "time"
+              }
+            ],
+            "fields": {}
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Min labels.creationTime",
+                "desc": false
+              }
+            ]
+          }
+        }
+      ],
+      "timeFrom": "365d"
+    },
+    {
+      "id": 26,
+      "type": "table",
       "title": "Cronjob health",
-      "description": "Last success shows how long ago each cronjob completed. Gap is last schedule minus last success: negative or small is healthy, large means runs are not completing, and Never succeeded means no success on record.",
+      "description": "Scheduled after last success = last scheduled time minus last successful time. Near zero or negative is healthy. A large value means the job keeps running but not succeeding, or it was paused after a failure. Never succeeded means no success on record.",
       "datasource": {
         "type": "elasticsearch",
         "uid": "${DS_APPLE}"
@@ -3282,7 +3477,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 99
+        "y": 108
       },
       "fieldConfig": {
         "defaults": {
@@ -3350,7 +3545,7 @@
           {
             "matcher": {
               "id": "byRegexp",
-              "options": "Gap"
+              "options": "Scheduled after last success"
             },
             "properties": [
               {
@@ -3425,7 +3620,7 @@
               "operator": "-",
               "right": "Max labels.lastSuccessfulTime"
             },
-            "alias": "Gap",
+            "alias": "Scheduled after last success",
             "replaceFields": false
           }
         },
@@ -3435,16 +3630,17 @@
             "fields": {},
             "sort": [
               {
-                "field": "Gap",
+                "field": "Scheduled after last success",
                 "desc": true
               }
             ]
           }
         }
-      ]
+      ],
+      "timeFrom": "365d"
     },
     {
-      "id": 26,
+      "id": 27,
       "type": "table",
       "title": "Cronjobs without nominated users",
       "description": "Cronjobs where nominated_users is empty or missing, so nobody is notified. An empty table means every cronjob has a nominated user.",
@@ -3512,7 +3708,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 108
+        "y": 117
       },
       "fieldConfig": {
         "defaults": {
@@ -3606,7 +3802,7 @@
       "timeFrom": "365d"
     },
     {
-      "id": 27,
+      "id": 28,
       "type": "bargauge",
       "title": "Cronjobs by user",
       "description": "Distinct cronjobs per owner, paused or running.",
@@ -3651,7 +3847,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 115
+        "y": 124
       },
       "fieldConfig": {
         "defaults": {
@@ -3686,7 +3882,7 @@
       "transformations": []
     },
     {
-      "id": 28,
+      "id": 29,
       "type": "piechart",
       "title": "Cronjobs by schedule",
       "description": "Distinct cronjobs per cron expression.",
@@ -3731,7 +3927,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 115
+        "y": 124
       },
       "fieldConfig": {
         "defaults": {
@@ -3757,7 +3953,7 @@
       "transformations": []
     },
     {
-      "id": 29,
+      "id": 30,
       "type": "bargauge",
       "title": "Top notebooks by cronjobs",
       "description": "Notebooks (input_filename) scheduled by the most cronjobs.",
@@ -3802,7 +3998,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 115
+        "y": 124
       },
       "fieldConfig": {
         "defaults": {
@@ -3837,7 +4033,7 @@
       "transformations": []
     },
     {
-      "id": 30,
+      "id": 31,
       "type": "timeseries",
       "title": "Cronjob lifecycle",
       "description": "ADDED and DELETED events per hour over 30 days. MODIFIED is excluded because it fires on every schedule run.",
@@ -3891,7 +4087,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 123
+        "y": 132
       },
       "fieldConfig": {
         "defaults": {
@@ -3919,7 +4115,7 @@
       "transformations": []
     },
     {
-      "id": 31,
+      "id": 32,
       "type": "table",
       "title": "Recently created cronjobs",
       "description": "Cronjobs created in the last 7 days.",
@@ -3997,7 +4193,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 123
+        "y": 132
       },
       "fieldConfig": {
         "defaults": {
@@ -4075,7 +4271,7 @@
       ]
     },
     {
-      "id": 32,
+      "id": 33,
       "type": "table",
       "title": "Cronjob pod runs",
       "description": "Finished cronjob pods (Succeeded or Failed). Job pods are cleaned up about 5 minutes after finishing, so older runs only appear as history. UNVERIFIED: depends on field k8s.pod.phase (1 Pending, 2 Running, 3 Succeeded, 4 Failed) being present in your metrics index; check in Discover.",
@@ -4137,7 +4333,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 131
+        "y": 140
       },
       "fieldConfig": {
         "defaults": {
@@ -4254,20 +4450,2891 @@
           }
         }
       ]
+    },
+    {
+      "id": 35,
+      "type": "row",
+      "title": "Namespace usage",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 201
+      },
+      "panels": []
+    },
+    {
+      "id": 36,
+      "type": "stat",
+      "title": "Active namespaces",
+      "description": "User namespaces with pods in the selected range.",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_MANGO}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_MANGO}"
+          },
+          "refId": "A",
+          "query": "labels.k8s_cluster_name:${cluster:lucene} AND kubernetes.namespace:adak-*",
+          "alias": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "cardinality",
+              "settings": {},
+              "field": "kubernetes.namespace"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "terms",
+              "field": "kubernetes.namespace",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "1"
+              }
+            }
+          ],
+          "timeField": "@timestamp"
+        }
+      ],
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 202
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "count"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "center"
+      },
+      "transformations": []
+    },
+    {
+      "id": 37,
+      "type": "stat",
+      "title": "Executors running now",
+      "description": "Distinct executor pods in the selected range, all namespaces.",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_MANGO}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_MANGO}"
+          },
+          "refId": "A",
+          "query": "labels.k8s_cluster_name:${cluster:lucene} AND labels.k8s_container_name:\"kubernetes-spark-executor\"",
+          "alias": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "cardinality",
+              "settings": {},
+              "field": "kubernetes.pod.name"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "terms",
+              "field": "kubernetes.pod.name",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "1"
+              }
+            }
+          ],
+          "timeField": "@timestamp"
+        }
+      ],
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 202
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "count"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "center"
+      },
+      "transformations": []
+    },
+    {
+      "id": 38,
+      "type": "stat",
+      "title": "Namespaces above 80% memory limit",
+      "description": "Namespaces whose average memory use is over 80% of limit (see table below).",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_MANGO}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_MANGO}"
+          },
+          "refId": "A",
+          "query": "labels.k8s_cluster_name:${cluster:lucene} AND kubernetes.namespace:adak-*",
+          "alias": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "avg",
+              "settings": {},
+              "field": "k8s.container.memory_limit_utilization"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "terms",
+              "field": "kubernetes.namespace",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "1000"
+              }
+            }
+          ],
+          "timeField": "@timestamp"
+        }
+      ],
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 202
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "count"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "center"
+      },
+      "transformations": []
+    },
+    {
+      "id": 39,
+      "type": "stat",
+      "title": "Namespaces with container restarts",
+      "description": "Namespaces with at least one container restart in the selected range. Usually OOM kills or crashing notebooks.",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_MANGO}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_MANGO}"
+          },
+          "refId": "A",
+          "query": "labels.k8s_cluster_name:${cluster:lucene} AND k8s.container.restarts:>0",
+          "alias": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "cardinality",
+              "settings": {},
+              "field": "kubernetes.namespace"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "terms",
+              "field": "kubernetes.namespace",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "1"
+              }
+            }
+          ],
+          "timeField": "@timestamp"
+        }
+      ],
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 202
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "count"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "center"
+      },
+      "transformations": []
+    },
+    {
+      "id": 40,
+      "type": "table",
+      "title": "Namespace usage: pods, peak memory and CPU",
+      "description": "One row per namespace: pod count, total peak memory and total peak CPU of its pods. Use the column filter to pick a namespace.",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_MANGO}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_MANGO}"
+          },
+          "refId": "A",
+          "query": "labels.k8s_cluster_name:${cluster:lucene} AND kubernetes.namespace:adak-*",
+          "alias": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "max",
+              "settings": {},
+              "field": "container.memory.working_set"
+            },
+            {
+              "id": "2",
+              "type": "max",
+              "settings": {},
+              "field": "container.cpu.usage"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "3",
+              "type": "terms",
+              "field": "kubernetes.namespace",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "1000"
+              }
+            },
+            {
+              "id": "4",
+              "type": "terms",
+              "field": "kubernetes.pod.name",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "10000"
+              }
+            }
+          ],
+          "timeField": "@timestamp"
+        }
+      ],
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 206
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": true,
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "Max container.memory.working_set \\(sum\\)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              },
+              {
+                "id": "displayName",
+                "value": "Total peak memory"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "Max container\\.cpu\\.usage \\(sum\\)"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Total peak CPU cores"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
+        }
+      },
+      "transformations": [
+        {
+          "id": "groupBy",
+          "options": {
+            "fields": {
+              "kubernetes.namespace": {
+                "aggregations": [],
+                "operation": "groupby"
+              },
+              "kubernetes.pod.name": {
+                "aggregations": [
+                  "count"
+                ],
+                "operation": "aggregate"
+              },
+              "Max container.memory.working_set": {
+                "aggregations": [
+                  "sum"
+                ],
+                "operation": "aggregate"
+              },
+              "Max container.cpu.usage": {
+                "aggregations": [
+                  "sum"
+                ],
+                "operation": "aggregate"
+              }
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Max container.memory.working_set (sum)",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 41,
+      "type": "table",
+      "title": "Namespace limits vs usage",
+      "description": "Average memory and CPU as a share of each namespace's limit and request. Memory over 80% means the namespace is close to its limit.",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_MANGO}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_MANGO}"
+          },
+          "refId": "A",
+          "query": "labels.k8s_cluster_name:${cluster:lucene} AND kubernetes.namespace:adak-*",
+          "alias": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "avg",
+              "settings": {},
+              "field": "k8s.container.memory_limit_utilization"
+            },
+            {
+              "id": "2",
+              "type": "avg",
+              "settings": {},
+              "field": "k8s.container.cpu_limit_utilization"
+            },
+            {
+              "id": "3",
+              "type": "avg",
+              "settings": {},
+              "field": "k8s.container.cpu_request_utilization"
+            },
+            {
+              "id": "4",
+              "type": "avg",
+              "settings": {},
+              "field": "k8s.container.memory_request_utilization"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "5",
+              "type": "terms",
+              "field": "kubernetes.namespace",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "1000"
+              }
+            }
+          ],
+          "timeField": "@timestamp"
+        }
+      ],
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 216
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": true,
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*_utilization.*"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 0.6
+                    },
+                    {
+                      "color": "red",
+                      "value": 0.8
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
+        }
+      },
+      "transformations": [
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Average k8s.container.memory_limit_utilization",
+                "desc": false
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 42,
+      "type": "timeseries",
+      "title": "Executors per namespace over time",
+      "description": "Distinct executor pods per namespace per time bucket, stacked.",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_MANGO}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_MANGO}"
+          },
+          "refId": "A",
+          "query": "labels.k8s_cluster_name:${cluster:lucene} AND labels.k8s_container_name:\"kubernetes-spark-executor\"",
+          "alias": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "cardinality",
+              "settings": {},
+              "field": "kubernetes.pod.name"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "terms",
+              "field": "kubernetes.namespace",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "desc",
+                "orderBy": "1",
+                "size": "20"
+              }
+            },
+            {
+              "id": "3",
+              "type": "date_histogram",
+              "field": "@timestamp",
+              "settings": {
+                "interval": "auto",
+                "min_doc_count": "0",
+                "trimEdges": "0"
+              }
+            }
+          ],
+          "timeField": "@timestamp"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 225
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 30,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "showPoints": "never"
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "transformations": []
+    },
+    {
+      "id": 43,
+      "type": "table",
+      "title": "Namespace quota (needs ResourceQuota data)",
+      "description": "Quota limits per namespace. Empty until ResourceQuota objects appear in the logs index (labels.k8s_resource_name:resourcequotas). Check in Discover first.",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_APPLE}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_APPLE}"
+          },
+          "refId": "A",
+          "query": "labels.k8s_cluster_name:${cluster:lucene} AND labels.k8s_resource_name:\"resourcequotas\"",
+          "alias": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "count",
+              "settings": {}
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "terms",
+              "field": "kubernetes.namespace",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "1000"
+              }
+            }
+          ],
+          "timeField": "@timestamp"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 225
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": true,
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
+        }
+      },
+      "transformations": []
+    },
+    {
+      "id": 45,
+      "type": "table",
+      "title": "Cronjobs not scheduled in the last 7 days, oldest first",
+      "description": "Cronjobs whose last scheduled time is older than 7 days, or missing. Oldest creation date at the top. Uses a fixed one-year window.",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_APPLE}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_APPLE}"
+          },
+          "refId": "A",
+          "query": "labels.k8s_cluster_name:${cluster:lucene} AND labels.k8s_resource_name:\"cronjobs\" AND NOT labels.lastScheduleTime:[now-7d TO now]",
+          "alias": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "min",
+              "settings": {},
+              "field": "labels.creationTime"
+            },
+            {
+              "id": "2",
+              "type": "max",
+              "settings": {},
+              "field": "labels.lastScheduleTime"
+            },
+            {
+              "id": "3",
+              "type": "max",
+              "settings": {},
+              "field": "labels.lastSuccessfulTime"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "4",
+              "type": "terms",
+              "field": "labels.cronjob_name",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "10000"
+              }
+            },
+            {
+              "id": "5",
+              "type": "terms",
+              "field": "labels.user",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "1"
+              }
+            },
+            {
+              "id": "6",
+              "type": "terms",
+              "field": "labels.schedule",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "1"
+              }
+            }
+          ],
+          "timeField": "@timestamp"
+        }
+      ],
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 148
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": true,
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*labels\\.last.*"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeFromNow"
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "special",
+                    "options": {
+                      "match": "null",
+                      "result": {
+                        "text": "Never",
+                        "color": "red",
+                        "index": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^Min.*"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsLocal"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
+        }
+      },
+      "transformations": [
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "labels.creationTime",
+                "destinationType": "time"
+              }
+            ],
+            "fields": {}
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "labels.lastScheduleTime",
+                "destinationType": "time"
+              }
+            ],
+            "fields": {}
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Min labels.creationTime",
+                "desc": false
+              }
+            ]
+          }
+        }
+      ],
+      "timeFrom": "365d"
+    },
+    {
+      "id": 46,
+      "type": "bargauge",
+      "title": "Stale cronjobs per owner (not scheduled 90+ days)",
+      "description": "Cronjobs per owner whose last scheduled time is older than 90 days or missing.",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_APPLE}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_APPLE}"
+          },
+          "refId": "A",
+          "query": "labels.k8s_cluster_name:${cluster:lucene} AND labels.k8s_resource_name:\"cronjobs\" AND NOT labels.lastScheduleTime:[now-90d TO now]",
+          "alias": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "cardinality",
+              "settings": {},
+              "field": "labels.cronjob_name"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "terms",
+              "field": "labels.user",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "desc",
+                "orderBy": "1",
+                "size": "20"
+              }
+            }
+          ],
+          "timeField": "@timestamp"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 158
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-BlPu"
+          },
+          "unit": "none",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [],
+          "fields": "",
+          "values": true
+        },
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "valueMode": "color"
+      },
+      "transformations": [],
+      "timeFrom": "365d"
+    },
+    {
+      "id": 47,
+      "type": "piechart",
+      "title": "Stale cronjobs by schedule",
+      "description": "Cronjobs not scheduled for 90+ days, grouped by cron expression.",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_APPLE}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_APPLE}"
+          },
+          "refId": "A",
+          "query": "labels.k8s_cluster_name:${cluster:lucene} AND labels.k8s_resource_name:\"cronjobs\" AND NOT labels.lastScheduleTime:[now-90d TO now]",
+          "alias": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "cardinality",
+              "settings": {},
+              "field": "labels.cronjob_name"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "terms",
+              "field": "labels.schedule",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "desc",
+                "orderBy": "1",
+                "size": "10"
+              }
+            }
+          ],
+          "timeField": "@timestamp"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 158
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [],
+          "fields": "",
+          "values": true
+        },
+        "pieType": "donut",
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": [
+            "value"
+          ]
+        }
+      },
+      "transformations": [],
+      "timeFrom": "365d"
+    },
+    {
+      "id": 48,
+      "type": "row",
+      "title": "Namespace quota and consumption",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 233
+      },
+      "panels": []
+    },
+    {
+      "id": 49,
+      "type": "table",
+      "title": "Namespace reserved vs used",
+      "description": "Per namespace: total CPU and memory reserved by limits and requests, against peak CPU and memory actually used. The namespace quota view until ResourceQuota data is available. Filter by namespace in the header.",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_MANGO}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_MANGO}"
+          },
+          "refId": "A",
+          "query": "labels.k8s_cluster_name:${cluster:lucene} AND kubernetes.namespace:adak-*",
+          "alias": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "max",
+              "settings": {},
+              "field": "k8s.container.cpu_limit"
+            },
+            {
+              "id": "2",
+              "type": "max",
+              "settings": {},
+              "field": "k8s.container.cpu_request"
+            },
+            {
+              "id": "3",
+              "type": "max",
+              "settings": {},
+              "field": "k8s.container.memory_limit"
+            },
+            {
+              "id": "4",
+              "type": "max",
+              "settings": {},
+              "field": "k8s.container.memory_request"
+            },
+            {
+              "id": "5",
+              "type": "max",
+              "settings": {},
+              "field": "container.memory.working_set"
+            },
+            {
+              "id": "6",
+              "type": "max",
+              "settings": {},
+              "field": "container.cpu.usage"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "7",
+              "type": "terms",
+              "field": "kubernetes.namespace",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "1000"
+              }
+            },
+            {
+              "id": "8",
+              "type": "terms",
+              "field": "kubernetes.pod.name",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "10000"
+              }
+            }
+          ],
+          "timeField": "@timestamp"
+        }
+      ],
+      "gridPos": {
+        "h": 11,
+        "w": 24,
+        "x": 0,
+        "y": 234
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": true,
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "Max k8s\\.container\\.memory_(limit|request) \\(sum\\)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "Max container\\.memory\\.working_set \\(sum\\)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              },
+              {
+                "id": "displayName",
+                "value": "Total peak memory used"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
+        }
+      },
+      "transformations": [
+        {
+          "id": "groupBy",
+          "options": {
+            "fields": {
+              "kubernetes.namespace": {
+                "aggregations": [],
+                "operation": "groupby"
+              },
+              "kubernetes.pod.name": {
+                "aggregations": [
+                  "count"
+                ],
+                "operation": "aggregate"
+              },
+              "Max k8s.container.cpu_limit": {
+                "aggregations": [
+                  "sum"
+                ],
+                "operation": "aggregate"
+              },
+              "Max k8s.container.cpu_request": {
+                "aggregations": [
+                  "sum"
+                ],
+                "operation": "aggregate"
+              },
+              "Max k8s.container.memory_limit": {
+                "aggregations": [
+                  "sum"
+                ],
+                "operation": "aggregate"
+              },
+              "Max k8s.container.memory_request": {
+                "aggregations": [
+                  "sum"
+                ],
+                "operation": "aggregate"
+              },
+              "Max container.memory.working_set": {
+                "aggregations": [
+                  "sum"
+                ],
+                "operation": "aggregate"
+              },
+              "Max container.cpu.usage": {
+                "aggregations": [
+                  "sum"
+                ],
+                "operation": "aggregate"
+              }
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Max container.memory.working_set (sum)",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 50,
+      "type": "table",
+      "title": "Top users consuming each namespace",
+      "description": "For each namespace, the users whose pods use the most memory and CPU. The user is read from the pod name, sorted by memory. Use the namespace column filter to pick one namespace.",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_MANGO}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_MANGO}"
+          },
+          "refId": "A",
+          "query": "labels.k8s_cluster_name:${cluster:lucene} AND kubernetes.namespace:adak-*",
+          "alias": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "max",
+              "settings": {},
+              "field": "container.memory.working_set"
+            },
+            {
+              "id": "2",
+              "type": "max",
+              "settings": {},
+              "field": "container.cpu.usage"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "3",
+              "type": "terms",
+              "field": "kubernetes.namespace",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "1000"
+              }
+            },
+            {
+              "id": "4",
+              "type": "terms",
+              "field": "kubernetes.pod.name",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "10000"
+              }
+            }
+          ],
+          "timeField": "@timestamp"
+        }
+      ],
+      "gridPos": {
+        "h": 11,
+        "w": 24,
+        "x": 0,
+        "y": 245
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": true,
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "Max container\\.memory\\.working_set \\(sum\\)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              },
+              {
+                "id": "displayName",
+                "value": "Peak memory"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "Max container\\.cpu\\.usage \\(sum\\)"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Peak CPU cores"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "kubernetes.pod.name"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Pods"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
+        }
+      },
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "source": "kubernetes.pod.name",
+            "format": "regexp",
+            "regExp": "/^(?:jupyter-)?(?<User>[a-z0-9]+)(?:-|$)/",
+            "replace": false,
+            "keepTime": false
+          }
+        },
+        {
+          "id": "groupBy",
+          "options": {
+            "fields": {
+              "kubernetes.namespace": {
+                "aggregations": [],
+                "operation": "groupby"
+              },
+              "User": {
+                "aggregations": [],
+                "operation": "groupby"
+              },
+              "kubernetes.pod.name": {
+                "aggregations": [
+                  "count"
+                ],
+                "operation": "aggregate"
+              },
+              "Max container.memory.working_set": {
+                "aggregations": [
+                  "sum"
+                ],
+                "operation": "aggregate"
+              },
+              "Max container.cpu.usage": {
+                "aggregations": [
+                  "sum"
+                ],
+                "operation": "aggregate"
+              }
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Max container.memory.working_set (sum)",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 51,
+      "type": "table",
+      "title": "Pods with no memory limit",
+      "description": "Containers in user namespaces with no memory limit set. They can use as much memory as the node has, so check these first.",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_MANGO}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_MANGO}"
+          },
+          "refId": "A",
+          "query": "labels.k8s_cluster_name:${cluster:lucene} AND kubernetes.namespace:adak-* AND NOT k8s.container.memory_limit:>0",
+          "alias": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "max",
+              "settings": {},
+              "field": "k8s.container.memory_request"
+            },
+            {
+              "id": "2",
+              "type": "max",
+              "settings": {},
+              "field": "container.memory.working_set"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "3",
+              "type": "terms",
+              "field": "kubernetes.namespace",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "1000"
+              }
+            },
+            {
+              "id": "4",
+              "type": "terms",
+              "field": "kubernetes.pod.name",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "10000"
+              }
+            }
+          ],
+          "timeField": "@timestamp"
+        }
+      ],
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 256
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": true,
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*memory.*"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
+        }
+      },
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "source": "kubernetes.pod.name",
+            "format": "regexp",
+            "regExp": "/^(?:jupyter-)?(?<User>[a-z0-9]+)(?:-|$)/",
+            "replace": false,
+            "keepTime": false
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Max container.memory.working_set",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 52,
+      "type": "table",
+      "title": "Restarts by namespace",
+      "description": "Highest container restart count per pod in each namespace. Restarts usually mean OOM kills or crashing notebooks.",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_MANGO}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_MANGO}"
+          },
+          "refId": "A",
+          "query": "labels.k8s_cluster_name:${cluster:lucene} AND kubernetes.namespace:adak-* AND k8s.container.restarts:>0",
+          "alias": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "max",
+              "settings": {},
+              "field": "k8s.container.restarts"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "terms",
+              "field": "kubernetes.namespace",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "1000"
+              }
+            },
+            {
+              "id": "3",
+              "type": "terms",
+              "field": "kubernetes.pod.name",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "10000"
+              }
+            }
+          ],
+          "timeField": "@timestamp"
+        }
+      ],
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 256
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": true,
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
+        }
+      },
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "source": "kubernetes.pod.name",
+            "format": "regexp",
+            "regExp": "/^(?:jupyter-)?(?<User>[a-z0-9]+)(?:-|$)/",
+            "replace": false,
+            "keepTime": false
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Max k8s.container.restarts",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 53,
+      "type": "timeseries",
+      "title": "Memory use by namespace over time",
+      "description": "Average working-set memory per namespace over the selected range. A steady climb in one namespace points to a growing workload.",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_MANGO}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_MANGO}"
+          },
+          "refId": "A",
+          "query": "labels.k8s_cluster_name:${cluster:lucene} AND kubernetes.namespace:adak-*",
+          "alias": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "avg",
+              "settings": {},
+              "field": "container.memory.working_set"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "terms",
+              "field": "kubernetes.namespace",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "desc",
+                "orderBy": "1",
+                "size": "20"
+              }
+            },
+            {
+              "id": "3",
+              "type": "date_histogram",
+              "field": "@timestamp",
+              "settings": {
+                "interval": "auto",
+                "min_doc_count": "0",
+                "trimEdges": "0"
+              }
+            }
+          ],
+          "timeField": "@timestamp"
+        }
+      ],
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 265
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 30,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "showPoints": "never"
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "transformations": []
+    },
+    {
+      "id": 55,
+      "type": "row",
+      "title": "CronJobs: proposed governance",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 178
+      },
+      "panels": []
+    },
+    {
+      "id": 56,
+      "type": "stat",
+      "title": "Stale for 90+ days",
+      "description": "Cronjobs not scheduled in 90 days, or never scheduled. Candidates for cleanup.",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_APPLE}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_APPLE}"
+          },
+          "refId": "A",
+          "query": "labels.k8s_cluster_name:${cluster:lucene} AND labels.k8s_resource_name:\"cronjobs\" AND NOT labels.lastScheduleTime:[now-90d TO now]",
+          "alias": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "cardinality",
+              "settings": {},
+              "field": "labels.cronjob_name"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "terms",
+              "field": "labels.cronjob_name",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "10000"
+              }
+            }
+          ],
+          "timeField": "@timestamp"
+        }
+      ],
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 179
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "none",
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "count"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "center"
+      },
+      "transformations": [],
+      "timeFrom": "365d"
+    },
+    {
+      "id": 57,
+      "type": "stat",
+      "title": "Never succeeded",
+      "description": "Cronjobs with no successful run on record within the last year.",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_APPLE}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_APPLE}"
+          },
+          "refId": "A",
+          "query": "labels.k8s_cluster_name:${cluster:lucene} AND labels.k8s_resource_name:\"cronjobs\" AND NOT labels.lastSuccessfulTime:*",
+          "alias": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "cardinality",
+              "settings": {},
+              "field": "labels.cronjob_name"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "terms",
+              "field": "labels.cronjob_name",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "10000"
+              }
+            }
+          ],
+          "timeField": "@timestamp"
+        }
+      ],
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 179
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "none",
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "count"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "center"
+      },
+      "transformations": [],
+      "timeFrom": "365d"
+    },
+    {
+      "id": 58,
+      "type": "stat",
+      "title": "Without nominated users",
+      "description": "Cronjobs with no nominated user, so nobody is notified about failures.",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_APPLE}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_APPLE}"
+          },
+          "refId": "A",
+          "query": "labels.k8s_cluster_name:${cluster:lucene} AND labels.k8s_resource_name:\"cronjobs\"",
+          "alias": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "cardinality",
+              "settings": {},
+              "field": "labels.cronjob_name"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "terms",
+              "field": "labels.cronjob_name",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "10000"
+              }
+            },
+            {
+              "id": "3",
+              "type": "terms",
+              "field": "labels.nominated_users",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "1",
+                "missing": "(none)"
+              }
+            }
+          ],
+          "timeField": "@timestamp"
+        }
+      ],
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 179
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "none",
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "count"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "center"
+      },
+      "transformations": [
+        {
+          "id": "filterByValue",
+          "options": {
+            "type": "include",
+            "match": "any",
+            "filters": [
+              {
+                "fieldName": "labels.nominated_users",
+                "config": {
+                  "id": "regex",
+                  "options": {
+                    "value": "^\\(none\\)$"
+                  }
+                }
+              },
+              {
+                "fieldName": "labels.nominated_users",
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": ""
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "timeFrom": "365d"
+    },
+    {
+      "id": 59,
+      "type": "stat",
+      "title": "Created in last 7 days",
+      "description": "New cronjobs this week. Check each has an owner and a nominee.",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_APPLE}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_APPLE}"
+          },
+          "refId": "A",
+          "query": "labels.k8s_cluster_name:${cluster:lucene} AND labels.k8s_resource_name:\"cronjobs\" AND labels.creationTime:[now-7d TO now]",
+          "alias": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "cardinality",
+              "settings": {},
+              "field": "labels.cronjob_name"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "terms",
+              "field": "labels.cronjob_name",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "10000"
+              }
+            }
+          ],
+          "timeField": "@timestamp"
+        }
+      ],
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 179
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "none",
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "count"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "center"
+      },
+      "transformations": [],
+      "timeFrom": "7d"
+    },
+    {
+      "id": 60,
+      "type": "table",
+      "title": "Cleanup review list",
+      "description": "Cronjobs stale for 90+ days or never scheduled, oldest first. Use CSV export to share with owners.",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_APPLE}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_APPLE}"
+          },
+          "refId": "A",
+          "query": "labels.k8s_cluster_name:${cluster:lucene} AND labels.k8s_resource_name:\"cronjobs\" AND NOT labels.lastScheduleTime:[now-90d TO now]",
+          "alias": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "min",
+              "settings": {},
+              "field": "labels.creationTime"
+            },
+            {
+              "id": "2",
+              "type": "max",
+              "settings": {},
+              "field": "labels.lastScheduleTime"
+            },
+            {
+              "id": "3",
+              "type": "max",
+              "settings": {},
+              "field": "labels.lastSuccessfulTime"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "4",
+              "type": "terms",
+              "field": "labels.cronjob_name",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "10000"
+              }
+            },
+            {
+              "id": "5",
+              "type": "terms",
+              "field": "labels.user",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "1"
+              }
+            },
+            {
+              "id": "6",
+              "type": "terms",
+              "field": "labels.nominated_users",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "1"
+              }
+            },
+            {
+              "id": "7",
+              "type": "terms",
+              "field": "labels.schedule",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "1"
+              }
+            }
+          ],
+          "timeField": "@timestamp"
+        }
+      ],
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 183
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": true,
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*labels\\.last.*"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeFromNow"
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "special",
+                    "options": {
+                      "match": "null",
+                      "result": {
+                        "text": "Never",
+                        "color": "red",
+                        "index": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^Min.*"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsLocal"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
+        }
+      },
+      "transformations": [
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "labels.creationTime",
+                "destinationType": "time"
+              }
+            ],
+            "fields": {}
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "labels.lastScheduleTime",
+                "destinationType": "time"
+              }
+            ],
+            "fields": {}
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Min labels.creationTime",
+                "desc": false
+              }
+            ]
+          }
+        }
+      ],
+      "timeFrom": "365d"
+    },
+    {
+      "id": 61,
+      "type": "bargauge",
+      "title": "Ownership coverage by user",
+      "description": "Distinct cronjobs per owner. Pair with Without nominated users to see who needs a nominee.",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_APPLE}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_APPLE}"
+          },
+          "refId": "A",
+          "query": "labels.k8s_cluster_name:${cluster:lucene} AND labels.k8s_resource_name:\"cronjobs\"",
+          "alias": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "cardinality",
+              "settings": {},
+              "field": "labels.cronjob_name"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "terms",
+              "field": "labels.user",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "desc",
+                "orderBy": "1",
+                "size": "20"
+              }
+            }
+          ],
+          "timeField": "@timestamp"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 193
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-BlPu"
+          },
+          "unit": "none",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [],
+          "fields": "",
+          "values": true
+        },
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "valueMode": "color"
+      },
+      "transformations": [],
+      "timeFrom": "365d"
+    },
+    {
+      "id": 63,
+      "type": "table",
+      "title": "Oldest cronjobs by creation date (all states)",
+      "description": "Every cronjob in the last year, oldest creation date first. Shows paused, running and never-run jobs. Times show Never where empty. Use this to review the longest-standing jobs.",
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_APPLE}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_APPLE}"
+          },
+          "refId": "A",
+          "query": "labels.k8s_cluster_name:${cluster:lucene} AND labels.k8s_resource_name:\"cronjobs\"",
+          "alias": "",
+          "timeField": "@timestamp",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "min",
+              "settings": {},
+              "field": "labels.creationTime"
+            },
+            {
+              "id": "2",
+              "type": "max",
+              "settings": {},
+              "field": "labels.lastScheduleTime"
+            },
+            {
+              "id": "3",
+              "type": "max",
+              "settings": {},
+              "field": "labels.lastSuccessfulTime"
+            }
+          ],
+          "bucketAggs": [
+            {
+              "id": "4",
+              "type": "terms",
+              "field": "labels.cronjob_name",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "10000"
+              }
+            },
+            {
+              "id": "5",
+              "type": "terms",
+              "field": "labels.user",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "1"
+              }
+            },
+            {
+              "id": "6",
+              "type": "terms",
+              "field": "labels.nominated_users",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "1"
+              }
+            },
+            {
+              "id": "7",
+              "type": "terms",
+              "field": "labels.schedule",
+              "settings": {
+                "min_doc_count": "1",
+                "order": "asc",
+                "orderBy": "_term",
+                "size": "1"
+              }
+            }
+          ]
+        }
+      ],
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 166
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": true,
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*labels\\.last.*"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeFromNow"
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "special",
+                    "options": {
+                      "match": "null",
+                      "result": {
+                        "text": "Never",
+                        "color": "red",
+                        "index": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^Min.*"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsLocal"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
+        }
+      },
+      "transformations": [
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "Min labels.creationTime",
+                "destinationType": "time"
+              },
+              {
+                "targetField": "Max labels.lastScheduleTime",
+                "destinationType": "time"
+              }
+            ],
+            "fields": {}
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Min labels.creationTime",
+                "desc": false
+              }
+            ]
+          }
+        }
+      ],
+      "timeFrom": "365d"
     }
   ]
 }
 
 
-Merge two Grafana dashboard JSON files and return the complete merged JSON.
-File 1 = my existing dashboard. File 2 = new dashboard with rows "JupyterHub Users" and "CronJobs".
-1. In File 1, remove any existing rows titled "JupyterHub Users" or "CronJobs" and the panels under them, if present.
-2. Append all panels and rows from File 2 below File 1's last panel.
-3. Give each appended panel an id that is unique in File 1 (add File 1's highest id).
-4. Shift each appended panel's gridPos.y so the new rows start below File 1's last row.
-5. Replace ${DS_MANGO} with <MANGO_UID> and ${DS_APPLE} with <APPLE_UID>. No ${DS_ text may remain.
-6. Keep File 1's uid, title, existing rows and existing variables unchanged. Make sure a variable named "cluster" exists and is restricted to a9c4d221e615eb9ca-cluster.
-7. Do not copy File 2's __inputs or __requires.
-8. Return the full JSON as a single file, with no commentary.
 
+-----
+
+Merge two Grafana dashboard JSON files. Return the complete merged JSON as one file.
+
+File 1 = my existing dashboard (classic JSON). It contains my cluster, pod, tabular view and JupyterHub and Executor Monitoring rows. Do not change them.
+File 2 = jupyterhub_cronjob_dashboard_v3.json, with rows "JupyterHub Users", "CronJobs", "CronJobs: proposed governance", "Namespace usage" and "Namespace quota and consumption".
+
+Steps:
+1. Keep every row and panel in File 1 exactly as it is, including Cluster, Pod, Tabular View and JupyterHub and Executor Monitoring. Do not edit, reorder or delete them.
+2. If File 1 already has a row titled "JupyterHub Users", "CronJobs", "CronJobs: proposed governance", "Namespace usage" or "Namespace quota and consumption", remove that row and the panels under it first. Otherwise leave File 1 alone.
+3. Append all rows and panels from File 2 below File 1's last panel.
+4. Give each appended panel an id unique in File 1 (add File 1's highest id).
+5. Move each appended panel's gridPos.y so the new rows start below File 1's last row.
+6. Replace ${DS_MANGO} with <MANGO_UID> and ${DS_APPLE} with <APPLE_UID>. No ${DS_ text may remain.
+7. Keep File 1's uid, title and variables. The "cluster" variable must list j1 : a9c4d221e615eb9ca-cluster, JH2-H3GKE2 : a57bb95c13a04853f-cluster and Infra : a02201dd04130ce80-cluster. Do not add other variables.
+8. Do not copy File 2's __inputs or __requires.
+9. Return the full merged JSON as one file, then a short report: panel count before and after, id offset, and any problems.
 
