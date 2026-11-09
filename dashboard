@@ -1,884 +1,232 @@
 {
-  "panels": [
+  "id": 100,
+  "type": "table",
+  "title": "Stale CronJobs — 90+ Days",
+  "description": "Latest CronJob records observed within the last 2 days. Includes jobs created more than 90 days ago whose last scheduled time is more than 90 days ago or is not recorded. Missing timestamps require verification. Recently observed does not guarantee the resource still exists. Sorted by creation date, oldest first.",
+  "gridPos": {
+    "h": 18,
+    "w": 24,
+    "x": 0,
+    "y": 0
+  },
+  "timeFrom": "2d",
+  "datasource": {
+    "type": "elasticsearch",
+    "uid": "REPLACE_WITH_LATEST_INDEX_DATASOURCE_UID"
+  },
+  "targets": [
     {
-      "id": 903,
-      "type": "table",
-      "title": "Cluster totals - used, requested and limit",
-      "description": "One row per cluster. Used = highest value per pod, summed. Requested and limit = declared values, summed.",
+      "refId": "A",
       "datasource": {
         "type": "elasticsearch",
-        "uid": "${DS_MANGO}"
+        "uid": "REPLACE_WITH_LATEST_INDEX_DATASOURCE_UID"
       },
-      "targets": [
+      "queryType": "lucene",
+      "query": "labels.k8s_cluster_name:${cluster:lucene} AND labels.k8s_resource_name:\"cronjobs\" AND @timestamp:[now-2d TO now] AND labels.creationTime:{* TO now-90d} AND (labels.lastScheduleTime:{* TO now-90d} OR (NOT _exists_:labels.lastScheduleTime))",
+      "alias": "",
+      "timeField": "@timestamp",
+      "metrics": [
         {
-          "datasource": {
-            "type": "elasticsearch",
-            "uid": "${DS_MANGO}"
-          },
-          "refId": "A",
-          "query": "labels.k8s_cluster_name:${cluster:lucene}",
-          "alias": "",
-          "timeField": "@timestamp",
-          "metrics": [
-            {
-              "id": "1",
-              "type": "max",
-              "settings": {},
-              "field": "container.cpu.usage"
-            },
-            {
-              "id": "2",
-              "type": "max",
-              "settings": {},
-              "field": "k8s.container.cpu_request"
-            },
-            {
-              "id": "3",
-              "type": "max",
-              "settings": {},
-              "field": "k8s.container.cpu_limit"
-            },
-            {
-              "id": "4",
-              "type": "max",
-              "settings": {},
-              "field": "container.memory.working_set"
-            },
-            {
-              "id": "5",
-              "type": "max",
-              "settings": {},
-              "field": "k8s.container.memory_request"
-            },
-            {
-              "id": "6",
-              "type": "max",
-              "settings": {},
-              "field": "k8s.container.memory_limit"
-            }
-          ],
-          "bucketAggs": [
-            {
-              "id": "7",
-              "type": "terms",
-              "field": "kubernetes.pod.name",
-              "settings": {
-                "min_doc_count": "1",
-                "order": "desc",
-                "orderBy": "_term",
-                "size": "10000"
-              }
-            },
-            {
-              "id": "8",
-              "type": "terms",
-              "field": "labels.k8s_cluster_name",
-              "settings": {
-                "min_doc_count": "1",
-                "order": "asc",
-                "orderBy": "_term",
-                "size": "10"
-              }
-            }
-          ]
+          "id": "1",
+          "type": "min",
+          "field": "labels.creationTime"
+        },
+        {
+          "id": "2",
+          "type": "max",
+          "field": "labels.lastScheduleTime"
+        },
+        {
+          "id": "3",
+          "type": "max",
+          "field": "labels.lastSuccessfulTime"
+        },
+        {
+          "id": "4",
+          "type": "max",
+          "field": "@timestamp"
         }
       ],
-      "gridPos": {
-        "h": 6,
-        "w": 24,
-        "x": 0,
-        "y": 0
-      },
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "align": "auto",
-            "filterable": true,
-            "cellOptions": {
-              "type": "auto"
-            }
-          },
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "CPU used"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "cores"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "CPU requested"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "cores"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "CPU limit"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "cores"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Memory used"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "bytes"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Memory requested"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "bytes"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Memory limit"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "bytes"
-              }
-            ]
-          }
-        ]
-      },
-      "options": {
-        "showHeader": true,
-        "cellHeight": "sm",
-        "footer": {
-          "show": false,
-          "reducer": [
-            "sum"
-          ],
-          "fields": ""
-        }
-      },
-      "transformations": [
+      "bucketAggs": [
         {
-          "id": "groupBy",
-          "options": {
-            "fields": {
-              "labels.k8s_cluster_name": {
-                "aggregations": [],
-                "operation": "groupby"
-              },
-              "kubernetes.pod.name": {
-                "aggregations": [
-                  "count"
-                ],
-                "operation": "aggregate"
-              },
-              "Max container.cpu.usage": {
-                "aggregations": [
-                  "sum"
-                ],
-                "operation": "aggregate"
-              },
-              "Max k8s.container.cpu_request": {
-                "aggregations": [
-                  "sum"
-                ],
-                "operation": "aggregate"
-              },
-              "Max k8s.container.cpu_limit": {
-                "aggregations": [
-                  "sum"
-                ],
-                "operation": "aggregate"
-              },
-              "Max container.memory.working_set": {
-                "aggregations": [
-                  "sum"
-                ],
-                "operation": "aggregate"
-              },
-              "Max k8s.container.memory_request": {
-                "aggregations": [
-                  "sum"
-                ],
-                "operation": "aggregate"
-              },
-              "Max k8s.container.memory_limit": {
-                "aggregations": [
-                  "sum"
-                ],
-                "operation": "aggregate"
-              }
-            }
+          "id": "5",
+          "type": "terms",
+          "field": "labels.k8s_cluster_name",
+          "settings": {
+            "min_doc_count": "1",
+            "size": "100",
+            "order": "asc",
+            "orderBy": "_term"
           }
         },
         {
-          "id": "sortBy",
-          "options": {
-            "fields": {},
-            "sort": [
-              {
-                "field": "Max container.memory.working_set (sum)",
-                "desc": true
-              }
-            ]
+          "id": "6",
+          "type": "terms",
+          "field": "kubernetes.namespace",
+          "settings": {
+            "min_doc_count": "1",
+            "size": "100",
+            "order": "asc",
+            "orderBy": "_term"
           }
         },
         {
-          "id": "organize",
-          "options": {
-            "indexByName": {
-              "Cluster": 0,
-              "Pods": 1,
-              "CPU used": 2,
-              "CPU requested": 3,
-              "CPU limit": 4,
-              "Memory used": 5,
-              "Memory requested": 6,
-              "Memory limit": 7
-            },
-            "renameByName": {
-              "Max container.cpu.usage (sum)": "CPU used",
-              "Max k8s.container.cpu_request (sum)": "CPU requested",
-              "Max k8s.container.cpu_limit (sum)": "CPU limit",
-              "Max container.memory.working_set (sum)": "Memory used",
-              "Max k8s.container.memory_request (sum)": "Memory requested",
-              "Max k8s.container.memory_limit (sum)": "Memory limit",
-              "kubernetes.pod.name (count)": "Pods",
-              "labels.k8s_cluster_name": "Cluster"
-            }
-          }
-        }
-      ]
-    },
-    {
-      "id": 904,
-      "type": "table",
-      "title": "Namespace totals - used, requested and limit",
-      "description": "One row per user namespace (adak-*). Used = highest value per pod, summed. Requested and limit = declared values, summed.",
-      "datasource": {
-        "type": "elasticsearch",
-        "uid": "${DS_MANGO}"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "elasticsearch",
-            "uid": "${DS_MANGO}"
-          },
-          "refId": "A",
-          "query": "labels.k8s_cluster_name:${cluster:lucene} AND kubernetes.namespace:adak-*",
-          "alias": "",
-          "timeField": "@timestamp",
-          "metrics": [
-            {
-              "id": "1",
-              "type": "max",
-              "settings": {},
-              "field": "container.cpu.usage"
-            },
-            {
-              "id": "2",
-              "type": "max",
-              "settings": {},
-              "field": "k8s.container.cpu_request"
-            },
-            {
-              "id": "3",
-              "type": "max",
-              "settings": {},
-              "field": "k8s.container.cpu_limit"
-            },
-            {
-              "id": "4",
-              "type": "max",
-              "settings": {},
-              "field": "container.memory.working_set"
-            },
-            {
-              "id": "5",
-              "type": "max",
-              "settings": {},
-              "field": "k8s.container.memory_request"
-            },
-            {
-              "id": "6",
-              "type": "max",
-              "settings": {},
-              "field": "k8s.container.memory_limit"
-            }
-          ],
-          "bucketAggs": [
-            {
-              "id": "7",
-              "type": "terms",
-              "field": "kubernetes.pod.name",
-              "settings": {
-                "min_doc_count": "1",
-                "order": "desc",
-                "orderBy": "_term",
-                "size": "10000"
-              }
-            },
-            {
-              "id": "8",
-              "type": "terms",
-              "field": "kubernetes.namespace",
-              "settings": {
-                "min_doc_count": "1",
-                "order": "asc",
-                "orderBy": "_term",
-                "size": "500"
-              }
-            }
-          ]
-        }
-      ],
-      "gridPos": {
-        "h": 10,
-        "w": 24,
-        "x": 0,
-        "y": 6
-      },
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "align": "auto",
-            "filterable": true,
-            "cellOptions": {
-              "type": "auto"
-            }
-          },
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "CPU used"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "cores"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "CPU requested"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "cores"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "CPU limit"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "cores"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Memory used"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "bytes"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Memory requested"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "bytes"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Memory limit"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "bytes"
-              }
-            ]
-          }
-        ]
-      },
-      "options": {
-        "showHeader": true,
-        "cellHeight": "sm",
-        "footer": {
-          "show": false,
-          "reducer": [
-            "sum"
-          ],
-          "fields": ""
-        }
-      },
-      "transformations": [
-        {
-          "id": "groupBy",
-          "options": {
-            "fields": {
-              "kubernetes.namespace": {
-                "aggregations": [],
-                "operation": "groupby"
-              },
-              "kubernetes.pod.name": {
-                "aggregations": [
-                  "count"
-                ],
-                "operation": "aggregate"
-              },
-              "Max container.cpu.usage": {
-                "aggregations": [
-                  "sum"
-                ],
-                "operation": "aggregate"
-              },
-              "Max k8s.container.cpu_request": {
-                "aggregations": [
-                  "sum"
-                ],
-                "operation": "aggregate"
-              },
-              "Max k8s.container.cpu_limit": {
-                "aggregations": [
-                  "sum"
-                ],
-                "operation": "aggregate"
-              },
-              "Max container.memory.working_set": {
-                "aggregations": [
-                  "sum"
-                ],
-                "operation": "aggregate"
-              },
-              "Max k8s.container.memory_request": {
-                "aggregations": [
-                  "sum"
-                ],
-                "operation": "aggregate"
-              },
-              "Max k8s.container.memory_limit": {
-                "aggregations": [
-                  "sum"
-                ],
-                "operation": "aggregate"
-              }
-            }
+          "id": "7",
+          "type": "terms",
+          "field": "labels.cronjob_uid",
+          "settings": {
+            "min_doc_count": "1",
+            "size": "10000",
+            "order": "asc",
+            "orderBy": "_term"
           }
         },
         {
-          "id": "sortBy",
-          "options": {
-            "fields": {},
-            "sort": [
-              {
-                "field": "Max container.memory.working_set (sum)",
-                "desc": true
-              }
-            ]
+          "id": "8",
+          "type": "terms",
+          "field": "labels.cronjob_name",
+          "settings": {
+            "min_doc_count": "1",
+            "size": "1",
+            "order": "asc",
+            "orderBy": "_term"
           }
         },
         {
-          "id": "organize",
-          "options": {
-            "indexByName": {
-              "Namespace": 0,
-              "Pods": 1,
-              "CPU used": 2,
-              "CPU requested": 3,
-              "CPU limit": 4,
-              "Memory used": 5,
-              "Memory requested": 6,
-              "Memory limit": 7
-            },
-            "renameByName": {
-              "Max container.cpu.usage (sum)": "CPU used",
-              "Max k8s.container.cpu_request (sum)": "CPU requested",
-              "Max k8s.container.cpu_limit (sum)": "CPU limit",
-              "Max container.memory.working_set (sum)": "Memory used",
-              "Max k8s.container.memory_request (sum)": "Memory requested",
-              "Max k8s.container.memory_limit (sum)": "Memory limit",
-              "kubernetes.pod.name (count)": "Pods",
-              "kubernetes.namespace": "Namespace"
-            }
-          }
-        }
-      ]
-    },
-    {
-      "id": 905,
-      "type": "table",
-      "title": "User totals (adak-acsgjh) - used, requested and limit",
-      "description": "One row per user across executor, server and cronjob pods. Filter a user with the icon in the User header.",
-      "datasource": {
-        "type": "elasticsearch",
-        "uid": "${DS_MANGO}"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "elasticsearch",
-            "uid": "${DS_MANGO}"
-          },
-          "refId": "A",
-          "query": "labels.k8s_cluster_name:${cluster:lucene} AND kubernetes.namespace:adak-acsgjh* AND labels.k8s_container_name:(\"kubernetes-spark-executor\" OR \"notebook\" OR \"notebook-runner\")",
-          "alias": "",
-          "timeField": "@timestamp",
-          "metrics": [
-            {
-              "id": "1",
-              "type": "max",
-              "settings": {},
-              "field": "container.cpu.usage"
-            },
-            {
-              "id": "2",
-              "type": "max",
-              "settings": {},
-              "field": "k8s.container.cpu_request"
-            },
-            {
-              "id": "3",
-              "type": "max",
-              "settings": {},
-              "field": "k8s.container.cpu_limit"
-            },
-            {
-              "id": "4",
-              "type": "max",
-              "settings": {},
-              "field": "container.memory.working_set"
-            },
-            {
-              "id": "5",
-              "type": "max",
-              "settings": {},
-              "field": "k8s.container.memory_request"
-            },
-            {
-              "id": "6",
-              "type": "max",
-              "settings": {},
-              "field": "k8s.container.memory_limit"
-            }
-          ],
-          "bucketAggs": [
-            {
-              "id": "7",
-              "type": "terms",
-              "field": "kubernetes.pod.name",
-              "settings": {
-                "min_doc_count": "1",
-                "order": "desc",
-                "orderBy": "_term",
-                "size": "10000"
-              }
-            },
-            {
-              "id": "8",
-              "type": "terms",
-              "field": "kubernetes.namespace",
-              "settings": {
-                "min_doc_count": "1",
-                "order": "asc",
-                "orderBy": "_term",
-                "size": "500"
-              }
-            }
-          ]
-        }
-      ],
-      "gridPos": {
-        "h": 12,
-        "w": 24,
-        "x": 0,
-        "y": 16
-      },
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "align": "auto",
-            "filterable": true,
-            "cellOptions": {
-              "type": "auto"
-            }
-          },
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "CPU used"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "cores"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "CPU requested"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "cores"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "CPU limit"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "cores"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Memory used"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "bytes"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Memory requested"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "bytes"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Memory limit"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "bytes"
-              }
-            ]
-          }
-        ]
-      },
-      "options": {
-        "showHeader": true,
-        "cellHeight": "sm",
-        "footer": {
-          "show": false,
-          "reducer": [
-            "sum"
-          ],
-          "fields": ""
-        }
-      },
-      "transformations": [
-        {
-          "id": "extractFields",
-          "options": {
-            "source": "kubernetes.pod.name",
-            "format": "regexp",
-            "regExp": "/^(?:jupyter-)?(?<User>[a-z0-9]+)(?:-|$)/",
-            "replace": false,
-            "keepTime": false
+          "id": "9",
+          "type": "terms",
+          "field": "labels.user",
+          "settings": {
+            "min_doc_count": "1",
+            "size": "1",
+            "order": "asc",
+            "orderBy": "_term",
+            "missing": "Not recorded"
           }
         },
         {
-          "id": "groupBy",
-          "options": {
-            "fields": {
-              "User": {
-                "aggregations": [],
-                "operation": "groupby"
-              },
-              "kubernetes.pod.name": {
-                "aggregations": [
-                  "count"
-                ],
-                "operation": "aggregate"
-              },
-              "Max container.cpu.usage": {
-                "aggregations": [
-                  "sum"
-                ],
-                "operation": "aggregate"
-              },
-              "Max k8s.container.cpu_request": {
-                "aggregations": [
-                  "sum"
-                ],
-                "operation": "aggregate"
-              },
-              "Max k8s.container.cpu_limit": {
-                "aggregations": [
-                  "sum"
-                ],
-                "operation": "aggregate"
-              },
-              "Max container.memory.working_set": {
-                "aggregations": [
-                  "sum"
-                ],
-                "operation": "aggregate"
-              },
-              "Max k8s.container.memory_request": {
-                "aggregations": [
-                  "sum"
-                ],
-                "operation": "aggregate"
-              },
-              "Max k8s.container.memory_limit": {
-                "aggregations": [
-                  "sum"
-                ],
-                "operation": "aggregate"
-              }
-            }
+          "id": "10",
+          "type": "terms",
+          "field": "labels.nominated_users",
+          "settings": {
+            "min_doc_count": "1",
+            "size": "100",
+            "order": "asc",
+            "orderBy": "_term",
+            "missing": "Not recorded"
           }
         },
         {
-          "id": "sortBy",
-          "options": {
-            "fields": {},
-            "sort": [
-              {
-                "field": "Max container.memory.working_set (sum)",
-                "desc": true
-              }
-            ]
-          }
-        },
-        {
-          "id": "organize",
-          "options": {
-            "indexByName": {
-              "User": 0,
-              "Pods": 1,
-              "CPU used": 2,
-              "CPU requested": 3,
-              "CPU limit": 4,
-              "Memory used": 5,
-              "Memory requested": 6,
-              "Memory limit": 7
-            },
-            "renameByName": {
-              "Max container.cpu.usage (sum)": "CPU used",
-              "Max k8s.container.cpu_request (sum)": "CPU requested",
-              "Max k8s.container.cpu_limit (sum)": "CPU limit",
-              "Max container.memory.working_set (sum)": "Memory used",
-              "Max k8s.container.memory_request (sum)": "Memory requested",
-              "Max k8s.container.memory_limit (sum)": "Memory limit",
-              "kubernetes.pod.name (count)": "Pods",
-              "User": "User"
-            }
+          "id": "11",
+          "type": "terms",
+          "field": "labels.schedule",
+          "settings": {
+            "min_doc_count": "1",
+            "size": "1",
+            "order": "asc",
+            "orderBy": "_term",
+            "missing": "Not recorded"
           }
         }
       ]
     }
-  ]
+  ],
+  "transformations": [
+    {
+      "id": "sortBy",
+      "options": {
+        "fields": {},
+        "sort": [
+          {
+            "field": "Min labels.creationTime",
+            "desc": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "organize",
+      "options": {
+        "excludeByName": {
+          "labels.cronjob_uid": true
+        },
+        "indexByName": {
+          "labels.k8s_cluster_name": 0,
+          "kubernetes.namespace": 1,
+          "labels.cronjob_name": 2,
+          "labels.user": 3,
+          "labels.nominated_users": 4,
+          "labels.schedule": 5,
+          "Min labels.creationTime": 6,
+          "Max labels.lastScheduleTime": 7,
+          "Max labels.lastSuccessfulTime": 8,
+          "Max @timestamp": 9,
+          "labels.cronjob_uid": 10
+        },
+        "renameByName": {
+          "labels.k8s_cluster_name": "Cluster",
+          "kubernetes.namespace": "Namespace",
+          "labels.cronjob_name": "CronJob Name",
+          "labels.user": "Owner",
+          "labels.nominated_users": "Nominated Users",
+          "labels.schedule": "Cron Schedule",
+          "Min labels.creationTime": "Created At",
+          "Max labels.lastScheduleTime": "Last Scheduled Time",
+          "Max labels.lastSuccessfulTime": "Last Successful Run",
+          "Max @timestamp": "Last Seen",
+          "labels.cronjob_uid": "CronJob UID"
+        }
+      }
+    }
+  ],
+  "fieldConfig": {
+    "defaults": {
+      "custom": {
+        "align": "auto",
+        "filterable": true,
+        "cellOptions": {
+          "type": "auto"
+        }
+      },
+      "noValue": "Not recorded"
+    },
+    "overrides": [
+      {
+        "matcher": {
+          "id": "byRegexp",
+          "options": "^(Created At|Last Scheduled Time|Last Successful Run|Last Seen)$"
+        },
+        "properties": [
+          {
+            "id": "unit",
+            "value": "dateTimeAsLocal"
+          },
+          {
+            "id": "custom.width",
+            "value": 210
+          }
+        ]
+      },
+      {
+        "matcher": {
+          "id": "byName",
+          "options": "CronJob Name"
+        },
+        "properties": [
+          {
+            "id": "custom.width",
+            "value": 350
+          }
+        ]
+      }
+    ]
+  },
+  "options": {
+    "showHeader": true,
+    "cellHeight": "sm",
+    "footer": {
+      "show": false
+    },
+    "sortBy": []
+  }
 }
