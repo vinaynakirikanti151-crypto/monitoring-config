@@ -1,232 +1,917 @@
 {
-  "id": 100,
-  "type": "table",
-  "title": "Stale CronJobs — 90+ Days",
-  "description": "Latest CronJob records observed within the last 2 days. Includes jobs created more than 90 days ago whose last scheduled time is more than 90 days ago or is not recorded. Missing timestamps require verification. Recently observed does not guarantee the resource still exists. Sorted by creation date, oldest first.",
-  "gridPos": {
-    "h": 18,
-    "w": 24,
-    "x": 0,
-    "y": 0
-  },
-  "timeFrom": "2d",
-  "datasource": {
-    "type": "elasticsearch",
-    "uid": "REPLACE_WITH_LATEST_INDEX_DATASOURCE_UID"
-  },
-  "targets": [
+  "__inputs": [
     {
-      "refId": "A",
-      "datasource": {
-        "type": "elasticsearch",
-        "uid": "REPLACE_WITH_LATEST_INDEX_DATASOURCE_UID"
-      },
-      "queryType": "lucene",
-      "query": "labels.k8s_cluster_name:${cluster:lucene} AND labels.k8s_resource_name:\"cronjobs\" AND @timestamp:[now-2d TO now] AND labels.creationTime:{* TO now-90d} AND (labels.lastScheduleTime:{* TO now-90d} OR (NOT _exists_:labels.lastScheduleTime))",
-      "alias": "",
-      "timeField": "@timestamp",
-      "metrics": [
-        {
-          "id": "1",
-          "type": "min",
-          "field": "labels.creationTime"
-        },
-        {
-          "id": "2",
-          "type": "max",
-          "field": "labels.lastScheduleTime"
-        },
-        {
-          "id": "3",
-          "type": "max",
-          "field": "labels.lastSuccessfulTime"
-        },
-        {
-          "id": "4",
-          "type": "max",
-          "field": "@timestamp"
-        }
-      ],
-      "bucketAggs": [
-        {
-          "id": "5",
-          "type": "terms",
-          "field": "labels.k8s_cluster_name",
-          "settings": {
-            "min_doc_count": "1",
-            "size": "100",
-            "order": "asc",
-            "orderBy": "_term"
-          }
-        },
-        {
-          "id": "6",
-          "type": "terms",
-          "field": "kubernetes.namespace",
-          "settings": {
-            "min_doc_count": "1",
-            "size": "100",
-            "order": "asc",
-            "orderBy": "_term"
-          }
-        },
-        {
-          "id": "7",
-          "type": "terms",
-          "field": "labels.cronjob_uid",
-          "settings": {
-            "min_doc_count": "1",
-            "size": "10000",
-            "order": "asc",
-            "orderBy": "_term"
-          }
-        },
-        {
-          "id": "8",
-          "type": "terms",
-          "field": "labels.cronjob_name",
-          "settings": {
-            "min_doc_count": "1",
-            "size": "1",
-            "order": "asc",
-            "orderBy": "_term"
-          }
-        },
-        {
-          "id": "9",
-          "type": "terms",
-          "field": "labels.user",
-          "settings": {
-            "min_doc_count": "1",
-            "size": "1",
-            "order": "asc",
-            "orderBy": "_term",
-            "missing": "Not recorded"
-          }
-        },
-        {
-          "id": "10",
-          "type": "terms",
-          "field": "labels.nominated_users",
-          "settings": {
-            "min_doc_count": "1",
-            "size": "100",
-            "order": "asc",
-            "orderBy": "_term",
-            "missing": "Not recorded"
-          }
-        },
-        {
-          "id": "11",
-          "type": "terms",
-          "field": "labels.schedule",
-          "settings": {
-            "min_doc_count": "1",
-            "size": "1",
-            "order": "asc",
-            "orderBy": "_term",
-            "missing": "Not recorded"
-          }
-        }
-      ]
+      "name": "DS_ELASTICSEARCH",
+      "label": "Elasticsearch (ELK)",
+      "description": "Select the CronJob snapshot datasource; its time field must be @timestamp.",
+      "type": "datasource",
+      "pluginId": "elasticsearch",
+      "pluginName": "Elasticsearch"
     }
   ],
-  "transformations": [
+  "__requires": [
     {
-      "id": "sortBy",
-      "options": {
-        "fields": {},
-        "sort": [
-          {
-            "field": "Min labels.creationTime",
-            "desc": false
-          }
-        ]
-      }
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "11.6.0"
     },
     {
-      "id": "organize",
-      "options": {
-        "excludeByName": {
-          "labels.cronjob_uid": true
-        },
-        "indexByName": {
-          "labels.k8s_cluster_name": 0,
-          "kubernetes.namespace": 1,
-          "labels.cronjob_name": 2,
-          "labels.user": 3,
-          "labels.nominated_users": 4,
-          "labels.schedule": 5,
-          "Min labels.creationTime": 6,
-          "Max labels.lastScheduleTime": 7,
-          "Max labels.lastSuccessfulTime": 8,
-          "Max @timestamp": 9,
-          "labels.cronjob_uid": 10
-        },
-        "renameByName": {
-          "labels.k8s_cluster_name": "Cluster",
-          "kubernetes.namespace": "Namespace",
-          "labels.cronjob_name": "CronJob Name",
-          "labels.user": "Owner",
-          "labels.nominated_users": "Nominated Users",
-          "labels.schedule": "Cron Schedule",
-          "Min labels.creationTime": "Created At",
-          "Max labels.lastScheduleTime": "Last Scheduled Time",
-          "Max labels.lastSuccessfulTime": "Last Successful Run",
-          "Max @timestamp": "Last Seen",
-          "labels.cronjob_uid": "CronJob UID"
-        }
-      }
+      "type": "datasource",
+      "id": "elasticsearch",
+      "name": "Elasticsearch",
+      "version": "1.0.0"
     }
   ],
-  "fieldConfig": {
-    "defaults": {
-      "custom": {
-        "align": "auto",
-        "filterable": true,
-        "cellOptions": {
-          "type": "auto"
-        }
-      },
-      "noValue": "Not recorded"
-    },
-    "overrides": [
+  "id": null,
+  "uid": "stale-cronjobs-latest-v6",
+  "title": "GCP SG - Stale CronJobs - Latest Snapshot",
+  "tags": [
+    "cronjobs",
+    "elk"
+  ],
+  "editable": true,
+  "schemaVersion": 41,
+  "version": 1,
+  "timezone": "browser",
+  "refresh": "",
+  "time": {
+    "from": "now-14d",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
       {
-        "matcher": {
-          "id": "byRegexp",
-          "options": "^(Created At|Last Scheduled Time|Last Successful Run|Last Seen)$"
+        "name": "cluster",
+        "label": "Cluster",
+        "type": "query",
+        "datasource": {
+          "type": "elasticsearch",
+          "uid": "${DS_ELASTICSEARCH}"
         },
-        "properties": [
-          {
-            "id": "unit",
-            "value": "dateTimeAsLocal"
-          },
-          {
-            "id": "custom.width",
-            "value": 210
-          }
-        ]
-      },
-      {
-        "matcher": {
-          "id": "byName",
-          "options": "CronJob Name"
-        },
-        "properties": [
-          {
-            "id": "custom.width",
-            "value": 350
-          }
-        ]
+        "query": "{\"find\": \"terms\", \"field\": \"labels.k8s_cluster_name\", \"size\": 100}",
+        "refresh": 2,
+        "includeAll": false,
+        "multi": false,
+        "sort": 1,
+        "current": {},
+        "options": []
       }
     ]
   },
-  "options": {
-    "showHeader": true,
-    "cellHeight": "sm",
-    "footer": {
-      "show": false
+  "panels": [
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Snapshot records matched — must be ≤10,000",
+      "description": "Counts the snapshots the tables read (same query). If red, the tables omit some CronJobs. Narrow the time window while keeping at least one fresh snapshot per job.",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 5
+      },
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_ELASTICSEARCH}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_ELASTICSEARCH}"
+          },
+          "queryType": "lucene",
+          "query": "labels.k8s_cluster_name:${cluster:lucene} AND labels.k8s_resource_name:\"cronjobs\" AND _exists_:labels.cronjob_uid AND labels.creationTime:{* TO now-90d}",
+          "timeField": "@timestamp",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "count"
+            }
+          ],
+          "bucketAggs": []
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 10001
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto"
+      }
     },
-    "sortBy": []
-  }
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Records missing UID — must be 0",
+      "description": "Records without a UID cannot be safely grouped and are excluded from the tables.",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 5
+      },
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_ELASTICSEARCH}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_ELASTICSEARCH}"
+          },
+          "queryType": "lucene",
+          "query": "labels.k8s_cluster_name:${cluster:lucene} AND labels.k8s_resource_name:\"cronjobs\" AND NOT _exists_:labels.cronjob_uid",
+          "timeField": "@timestamp",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "count"
+            }
+          ],
+          "bucketAggs": []
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 1,
+      "type": "table",
+      "title": "Created >90 days ago — last scheduled >90 days ago",
+      "description": "Latest observed snapshot per cluster and UID, then age filters. Age is relative to the dashboard end time. Check the record-count warning above.",
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 24,
+        "h": 12
+      },
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_ELASTICSEARCH}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_ELASTICSEARCH}"
+          },
+          "queryType": "lucene",
+          "query": "labels.k8s_cluster_name:${cluster:lucene} AND labels.k8s_resource_name:\"cronjobs\" AND _exists_:labels.cronjob_uid AND labels.creationTime:{* TO now-90d}",
+          "timeField": "@timestamp",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "raw_data",
+              "settings": {
+                "size": "10000"
+              }
+            }
+          ],
+          "bucketAggs": []
+        }
+      ],
+      "transformations": [
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "@timestamp",
+                "desc": true
+              }
+            ]
+          }
+        },
+        {
+          "id": "groupBy",
+          "options": {
+            "fields": {
+              "labels.k8s_cluster_name": {
+                "operation": "groupby",
+                "aggregations": []
+              },
+              "labels.cronjob_uid": {
+                "operation": "groupby",
+                "aggregations": []
+              },
+              "kubernetes.namespace": {
+                "operation": "aggregate",
+                "aggregations": [
+                  "first"
+                ]
+              },
+              "labels.cronjob_name": {
+                "operation": "aggregate",
+                "aggregations": [
+                  "first"
+                ]
+              },
+              "labels.user": {
+                "operation": "aggregate",
+                "aggregations": [
+                  "first"
+                ]
+              },
+              "labels.nominated_users": {
+                "operation": "aggregate",
+                "aggregations": [
+                  "first"
+                ]
+              },
+              "labels.schedule": {
+                "operation": "aggregate",
+                "aggregations": [
+                  "first"
+                ]
+              },
+              "labels.creationTime": {
+                "operation": "aggregate",
+                "aggregations": [
+                  "first"
+                ]
+              },
+              "labels.lastScheduleTime": {
+                "operation": "aggregate",
+                "aggregations": [
+                  "first"
+                ]
+              },
+              "labels.lastSuccessfulTime": {
+                "operation": "aggregate",
+                "aggregations": [
+                  "first"
+                ]
+              },
+              "@timestamp": {
+                "operation": "aggregate",
+                "aggregations": [
+                  "first"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "labels.k8s_cluster_name": "Cluster",
+              "labels.cronjob_uid": "CronJob UID",
+              "kubernetes.namespace (first)": "Namespace",
+              "labels.cronjob_name (first)": "CronJob Name",
+              "labels.user (first)": "Owner",
+              "labels.nominated_users (first)": "Nominated Users",
+              "labels.schedule (first)": "Cron Schedule",
+              "labels.creationTime (first)": "Created At",
+              "labels.lastScheduleTime (first)": "Last Scheduled Time",
+              "labels.lastSuccessfulTime (first)": "Last Successful Run",
+              "@timestamp (first)": "Last Seen"
+            }
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "type": "include",
+            "match": "all",
+            "filters": [
+              {
+                "fieldName": "Last Scheduled Time",
+                "config": {
+                  "id": "isNotNull",
+                  "options": {}
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "Created At",
+                "destinationType": "time"
+              },
+              {
+                "targetField": "Last Scheduled Time",
+                "destinationType": "time"
+              },
+              {
+                "targetField": "Last Successful Run",
+                "destinationType": "time"
+              },
+              {
+                "targetField": "Last Seen",
+                "destinationType": "time"
+              }
+            ]
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "type": "include",
+            "match": "all",
+            "filters": [
+              {
+                "fieldName": "Created At",
+                "config": {
+                  "id": "isNotNull",
+                  "options": {}
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "alias": "Creation age (ms)",
+            "binary": {
+              "left": {
+                "fixed": "${__to}"
+              },
+              "operator": "-",
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Created At"
+                }
+              }
+            },
+            "replaceFields": false
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "type": "include",
+            "match": "all",
+            "filters": [
+              {
+                "fieldName": "Creation age (ms)",
+                "config": {
+                  "id": "greater",
+                  "options": {
+                    "value": 7776000000
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "alias": "Schedule age (ms)",
+            "binary": {
+              "left": {
+                "fixed": "${__to}"
+              },
+              "operator": "-",
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Last Scheduled Time"
+                }
+              }
+            },
+            "replaceFields": false
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "type": "include",
+            "match": "all",
+            "filters": [
+              {
+                "fieldName": "Schedule age (ms)",
+                "config": {
+                  "id": "greater",
+                  "options": {
+                    "value": 7776000000
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Created At",
+                "desc": false
+              }
+            ]
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "Cluster": 0,
+              "Namespace": 1,
+              "CronJob Name": 2,
+              "Owner": 3,
+              "Nominated Users": 4,
+              "Cron Schedule": 5,
+              "Created At": 6,
+              "Job age": 7,
+              "Last Scheduled Time": 8,
+              "Time since last schedule": 9,
+              "Last Successful Run": 10,
+              "Last Seen": 11,
+              "CronJob UID": 12
+            },
+            "renameByName": {
+              "Creation age (ms)": "Job age",
+              "Schedule age (ms)": "Time since last schedule"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Not recorded",
+          "custom": {
+            "align": "auto",
+            "filterable": true,
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^(Created At|Last Scheduled Time|Last Successful Run|Last Seen)$"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsLocal"
+              },
+              {
+                "id": "custom.width",
+                "value": 205
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^(Job age|Time since last schedule)$"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dtdurationms"
+              },
+              {
+                "id": "custom.width",
+                "value": 170
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CronJob Name"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 330
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "sortBy": []
+      }
+    },
+    {
+      "id": 2,
+      "type": "table",
+      "title": "Created >90 days ago — no last scheduled time recorded",
+      "description": "Latest observed snapshot per cluster and UID with no last scheduled time. Missing does not prove never scheduled. Check the record-count warning above.",
+      "gridPos": {
+        "x": 0,
+        "y": 17,
+        "w": 24,
+        "h": 12
+      },
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_ELASTICSEARCH}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_ELASTICSEARCH}"
+          },
+          "queryType": "lucene",
+          "query": "labels.k8s_cluster_name:${cluster:lucene} AND labels.k8s_resource_name:\"cronjobs\" AND _exists_:labels.cronjob_uid AND labels.creationTime:{* TO now-90d}",
+          "timeField": "@timestamp",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "raw_data",
+              "settings": {
+                "size": "10000"
+              }
+            }
+          ],
+          "bucketAggs": []
+        }
+      ],
+      "transformations": [
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "@timestamp",
+                "desc": true
+              }
+            ]
+          }
+        },
+        {
+          "id": "groupBy",
+          "options": {
+            "fields": {
+              "labels.k8s_cluster_name": {
+                "operation": "groupby",
+                "aggregations": []
+              },
+              "labels.cronjob_uid": {
+                "operation": "groupby",
+                "aggregations": []
+              },
+              "kubernetes.namespace": {
+                "operation": "aggregate",
+                "aggregations": [
+                  "first"
+                ]
+              },
+              "labels.cronjob_name": {
+                "operation": "aggregate",
+                "aggregations": [
+                  "first"
+                ]
+              },
+              "labels.user": {
+                "operation": "aggregate",
+                "aggregations": [
+                  "first"
+                ]
+              },
+              "labels.nominated_users": {
+                "operation": "aggregate",
+                "aggregations": [
+                  "first"
+                ]
+              },
+              "labels.schedule": {
+                "operation": "aggregate",
+                "aggregations": [
+                  "first"
+                ]
+              },
+              "labels.creationTime": {
+                "operation": "aggregate",
+                "aggregations": [
+                  "first"
+                ]
+              },
+              "labels.lastScheduleTime": {
+                "operation": "aggregate",
+                "aggregations": [
+                  "first"
+                ]
+              },
+              "labels.lastSuccessfulTime": {
+                "operation": "aggregate",
+                "aggregations": [
+                  "first"
+                ]
+              },
+              "@timestamp": {
+                "operation": "aggregate",
+                "aggregations": [
+                  "first"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "labels.k8s_cluster_name": "Cluster",
+              "labels.cronjob_uid": "CronJob UID",
+              "kubernetes.namespace (first)": "Namespace",
+              "labels.cronjob_name (first)": "CronJob Name",
+              "labels.user (first)": "Owner",
+              "labels.nominated_users (first)": "Nominated Users",
+              "labels.schedule (first)": "Cron Schedule",
+              "labels.creationTime (first)": "Created At",
+              "labels.lastScheduleTime (first)": "Last Scheduled Time",
+              "labels.lastSuccessfulTime (first)": "Last Successful Run",
+              "@timestamp (first)": "Last Seen"
+            }
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "type": "exclude",
+            "match": "all",
+            "filters": [
+              {
+                "fieldName": "Last Scheduled Time",
+                "config": {
+                  "id": "isNotNull",
+                  "options": {}
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "Created At",
+                "destinationType": "time"
+              },
+              {
+                "targetField": "Last Scheduled Time",
+                "destinationType": "time"
+              },
+              {
+                "targetField": "Last Successful Run",
+                "destinationType": "time"
+              },
+              {
+                "targetField": "Last Seen",
+                "destinationType": "time"
+              }
+            ]
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "type": "include",
+            "match": "all",
+            "filters": [
+              {
+                "fieldName": "Created At",
+                "config": {
+                  "id": "isNotNull",
+                  "options": {}
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "alias": "Creation age (ms)",
+            "binary": {
+              "left": {
+                "fixed": "${__to}"
+              },
+              "operator": "-",
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Created At"
+                }
+              }
+            },
+            "replaceFields": false
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "type": "include",
+            "match": "all",
+            "filters": [
+              {
+                "fieldName": "Creation age (ms)",
+                "config": {
+                  "id": "greater",
+                  "options": {
+                    "value": 7776000000
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Created At",
+                "desc": false
+              }
+            ]
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "Cluster": 0,
+              "Namespace": 1,
+              "CronJob Name": 2,
+              "Owner": 3,
+              "Nominated Users": 4,
+              "Cron Schedule": 5,
+              "Created At": 6,
+              "Job age": 7,
+              "Last Scheduled Time": 8,
+              "Last Successful Run": 9,
+              "Last Seen": 10,
+              "CronJob UID": 11
+            },
+            "renameByName": {
+              "Creation age (ms)": "Job age"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Not recorded",
+          "custom": {
+            "align": "auto",
+            "filterable": true,
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^(Created At|Last Scheduled Time|Last Successful Run|Last Seen)$"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsLocal"
+              },
+              {
+                "id": "custom.width",
+                "value": 205
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^(Job age|Time since last schedule)$"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dtdurationms"
+              },
+              {
+                "id": "custom.width",
+                "value": 170
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CronJob Name"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 330
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "sortBy": []
+      }
+    },
+    {
+      "id": 5,
+      "type": "text",
+      "title": "Report scope",
+      "gridPos": {
+        "x": 0,
+        "y": 29,
+        "w": 24,
+        "h": 8
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**Read both status panels before using this report.** Tables use the latest observed snapshot per cluster and CronJob UID, including null values, then apply strict >90-day filters relative to the dashboard end time. The query pre-filters to CronJobs created more than 90 days before now (creation time never changes), which keeps the record count low.\n\n**Setup:** Grafana 11.6+ with transformation variable interpolation (`${__to}`); datasource time field `@timestamp`; source fields must match the supplied names. Dates must be ISO-8601 or epoch milliseconds. The cluster variable needs an aggregatable field (use `.keyword` if your mapping requires it).\n\n**Coverage:** Raw queries return at most 10,000 newest snapshots. A red record count means incomplete coverage: narrow the time window, keeping at least one fresh snapshot per job. Records missing a UID are excluded.\n\n**Panel 1:** latest snapshot has a last scheduled time older than 90 days. **Panel 2:** latest snapshot has no last scheduled time. Missing does not prove never scheduled, so check Last Seen and the raw record.\n\n**Interpretation:** Suspended jobs are included. Recently deleted jobs remain until their records leave the window; Last Seen is the latest snapshot, not proof the job exists. Snapshots must hold complete resource state, not partial update events. Conflicting snapshots with identical timestamps cannot be ordered reliably."
+      }
+    }
+  ]
 }
+
+
