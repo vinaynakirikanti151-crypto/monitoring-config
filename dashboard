@@ -1,157 +1,188 @@
 {
-  "id": 100,
-  "type": "table",
-  "title": "Top 15 users by Spark executor memory (cluster)",
-  "description": "Total executor memory per user across all namespaces, top 15",
-  "gridPos": { "h": 10, "w": 24, "x": 0, "y": 0 },
-  "datasource": {
-    "type": "elasticsearch",
-    "uid": "REPLACE_WITH_DATASOURCE_UID"
-  },
-  "targets": [
-    {
-      "refId": "A",
-      "datasource": {
-        "type": "elasticsearch",
-        "uid": "REPLACE_WITH_DATASOURCE_UID"
-      },
-      "query": "labels.k8s.container_name:(\"kubernetes-spark-executor\")",
-      "alias": "",
-      "timeField": "@timestamp",
-      "metrics": [
-        { "id": "1", "type": "max", "field": "container.memory.working_set" },
-        { "id": "2", "type": "max", "field": "k8s.container.memory_request" }
-      ],
-      "bucketAggs": [
-        {
-          "id": "3",
-          "type": "terms",
-          "field": "kubernetes.pod.name",
-          "settings": { "size": "10000", "order": "asc", "orderBy": "_term", "min_doc_count": "1" }
-        },
-        {
-          "id": "4",
-          "type": "terms",
-          "field": "kubernetes.namespace",
-          "settings": { "size": "100", "order": "asc", "orderBy": "_term", "min_doc_count": "1" }
-        }
-      ]
-    }
-  ],
-  "transformations": [
-    {
-      "id": "extractFields",
-      "options": {
-        "source": "kubernetes.pod.name",
-        "format": "regexp",
-        "regExp": "^jupyter-(?<User>[a-z0-9]+)",
-        "replace": false,
-        "keepTime": false
-      }
-    },
-    {
-      "id": "groupBy",
-      "options": {
-        "fields": {
-          "User": { "aggregations": [], "operation": "groupby" },
-          "kubernetes.pod.name": { "aggregations": ["count"], "operation": "aggregate" },
-          "Max container.memory.working_set": { "aggregations": ["sum"], "operation": "aggregate" },
-          "Max k8s.container.memory_request": { "aggregations": ["sum"], "operation": "aggregate" }
-        }
-      }
-    },
-    {
-      "id": "filterByValue",
-      "options": {
-        "type": "exclude",
-        "match": "any",
-        "filters": [
-          { "fieldName": "User", "config": { "id": "isNull", "options": {} } }
-        ]
-      }
-    },
-    {
-      "id": "sortBy",
-      "options": {
-        "fields": {},
-        "sort": [
-          { "field": "Max container.memory.working_set (sum)", "desc": true }
-        ]
-      }
-    },
-    {
-      "id": "limit",
-      "options": { "limitField": 15 }
-    },
-    {
-      "id": "organize",
-      "options": {
-        "excludeByName": {},
-        "indexByName": {
-          "User": 0,
-          "kubernetes.pod.name (count)": 1,
-          "Max container.memory.working_set (sum)": 2,
-          "Max k8s.container.memory_request (sum)": 3
-        },
-        "renameByName": {
-          "User": "User",
-          "kubernetes.pod.name (count)": "Pods",
-          "Max container.memory.working_set (sum)": "Memory used",
-          "Max k8s.container.memory_request (sum)": "Memory requested"
-        }
-      }
-    }
-  ],
-  "fieldConfig": {
-    "defaults": {
-      "unit": "bytes",
-      "decimals": 2,
-      "min": 0,
-      "color": { "mode": "thresholds" },
-      "custom": {
-        "align": "auto",
-        "filterable": true,
-        "cellOptions": { "type": "auto" }
-      },
-      "thresholds": {
-        "mode": "absolute",
-        "steps": [{ "color": "green", "value": null }]
-      }
-    },
-    "overrides": [
+  "id": null,
+  "uid": "spark-exec-mem-users",
+  "title": "Spark Executor Memory by User",
+  "tags": ["spark", "kubernetes", "memory"],
+  "timezone": "browser",
+  "editable": true,
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "",
+  "time": { "from": "now-6h", "to": "now" },
+  "templating": {
+    "list": [
       {
-        "matcher": { "id": "byName", "options": "User" },
-        "properties": [{ "id": "custom.width", "value": 160 }]
+        "name": "datasource",
+        "label": "Datasource",
+        "type": "datasource",
+        "query": "elasticsearch",
+        "current": {},
+        "hide": 0,
+        "refresh": 1
       },
       {
-        "matcher": { "id": "byName", "options": "Pods" },
-        "properties": [
-          { "id": "custom.width", "value": 80 },
-          { "id": "unit", "value": "none" },
-          { "id": "decimals", "value": 0 }
-        ]
-      },
-      {
-        "matcher": { "id": "byName", "options": "Memory used" },
-        "properties": [
-          { "id": "unit", "value": "bytes" },
-          {
-            "id": "custom.cellOptions",
-            "value": { "type": "gauge", "mode": "gradient", "valueDisplayMode": "text" }
-          },
-          { "id": "color", "value": { "mode": "continuous-GrYlRd" } }
-        ]
-      },
-      {
-        "matcher": { "id": "byName", "options": "Memory requested" },
-        "properties": [{ "id": "unit", "value": "bytes" }]
+        "name": "cluster",
+        "label": "Cluster",
+        "type": "query",
+        "datasource": { "type": "elasticsearch", "uid": "${datasource}" },
+        "query": "{\"find\": \"terms\", \"field\": \"labels.k8s_cluster_name\", \"size\": 100}",
+        "multi": true,
+        "includeAll": true,
+        "allValue": "*",
+        "current": {},
+        "hide": 0,
+        "refresh": 2,
+        "sort": 1
       }
     ]
   },
-  "options": {
-    "showHeader": true,
-    "cellHeight": "sm",
-    "footer": { "show": false, "reducer": ["sum"], "fields": "" },
-    "sortBy": [{ "displayName": "Memory used", "desc": true }]
-  }
+  "annotations": { "list": [] },
+  "panels": [
+    {
+      "id": 1,
+      "type": "table",
+      "title": "Top 15 users by Spark executor memory (cluster)",
+      "description": "Total executor memory per user across all namespaces, top 15",
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 0 },
+      "datasource": { "type": "elasticsearch", "uid": "${datasource}" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "elasticsearch", "uid": "${datasource}" },
+          "query": "labels.k8s_cluster_name:${cluster:lucene} AND labels.k8s_container_name:\"kubernetes-spark-executor\"",
+          "alias": "",
+          "timeField": "@timestamp",
+          "metrics": [
+            { "id": "1", "type": "max", "field": "container.memory.working_set" },
+            { "id": "2", "type": "max", "field": "k8s.container.memory_request" }
+          ],
+          "bucketAggs": [
+            {
+              "id": "3",
+              "type": "terms",
+              "field": "kubernetes.pod.name",
+              "settings": { "size": "10000", "order": "asc", "orderBy": "_term", "min_doc_count": "1" }
+            },
+            {
+              "id": "4",
+              "type": "terms",
+              "field": "kubernetes.namespace",
+              "settings": { "size": "100", "order": "asc", "orderBy": "_term", "min_doc_count": "1" }
+            }
+          ]
+        }
+      ],
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "source": "kubernetes.pod.name",
+            "format": "regexp",
+            "regExp": "^(?<User>[a-z0-9]+)-(?:.*-)?exec-[0-9]+$",
+            "replace": false,
+            "keepTime": false
+          }
+        },
+        {
+          "id": "groupBy",
+          "options": {
+            "fields": {
+              "User": { "aggregations": [], "operation": "groupby" },
+              "kubernetes.pod.name": { "aggregations": ["count"], "operation": "aggregate" },
+              "Max container.memory.working_set": { "aggregations": ["sum"], "operation": "aggregate" },
+              "Max k8s.container.memory_request": { "aggregations": ["sum"], "operation": "aggregate" }
+            }
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "type": "exclude",
+            "match": "any",
+            "filters": [
+              { "fieldName": "User", "config": { "id": "isNull", "options": {} } }
+            ]
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [{ "field": "Max container.memory.working_set (sum)", "desc": true }]
+          }
+        },
+        { "id": "limit", "options": { "limitField": 15 } },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "indexByName": {
+              "User": 0,
+              "kubernetes.pod.name (count)": 1,
+              "Max container.memory.working_set (sum)": 2,
+              "Max k8s.container.memory_request (sum)": 3
+            },
+            "renameByName": {
+              "User": "User",
+              "kubernetes.pod.name (count)": "Pods",
+              "Max container.memory.working_set (sum)": "Memory used",
+              "Max k8s.container.memory_request (sum)": "Memory requested"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "decimals": 2,
+          "min": 0,
+          "color": { "mode": "thresholds" },
+          "custom": {
+            "align": "auto",
+            "filterable": true,
+            "cellOptions": { "type": "auto" }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "User" },
+            "properties": [{ "id": "custom.width", "value": 160 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Pods" },
+            "properties": [
+              { "id": "custom.width", "value": 80 },
+              { "id": "unit", "value": "none" },
+              { "id": "decimals", "value": 0 }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Memory used" },
+            "properties": [
+              { "id": "unit", "value": "bytes" },
+              {
+                "id": "custom.cellOptions",
+                "value": { "type": "gauge", "mode": "gradient", "valueDisplayMode": "text" }
+              },
+              { "id": "color", "value": { "mode": "continuous-GrYlRd" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Memory requested" },
+            "properties": [{ "id": "unit", "value": "bytes" }]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": { "show": false, "reducer": ["sum"], "fields": "" },
+        "sortBy": [{ "displayName": "Memory used", "desc": true }]
+      }
+    }
+  ]
 }
